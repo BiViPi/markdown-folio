@@ -1,0 +1,144 @@
+.workspace-shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#document-container {
+    flex: 1;
+    padding: 84px 24px 32px;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background:
+        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(30, 80, 160, 0.25) 0%, transparent 65%),
+        radial-gradient(ellipse 80% 70% at 22% 100%, rgba(160, 100, 10, 0.15) 0%, transparent 60%),
+        linear-gradient(175deg, #111e35 0%, #141e2e 40%, #181c18 70%, #1a1710 100%);
+}
+
+body.light-mode #document-container {
+    background:
+        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(87, 122, 197, 0.2) 0%, transparent 62%),
+        radial-gradient(ellipse 80% 70% at 22% 100%, rgba(185, 143, 55, 0.2) 0%, transparent 58%),
+        linear-gradient(180deg, #f1f5ff 0%, #f6f2e7 100%);
+}
+
+#document-paper {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm 24mm 20mm;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--page-shadow);
+    background: var(--page-bg);
+    transform: scale(var(--zoom-scale));
+    transform-origin: top center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: calc((var(--zoom-scale) - 1) * 297mm);
+}
+
+#document-paper.width-narrow {
+    width: 184mm;
+}
+
+#document-paper.width-standard {
+    width: 210mm;
+}
+
+#document-paper.width-wide {
+    width: 236mm;
+}
+
+#document-content {
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+}
+
+#document-content h1 {
+    font-family: var(--font-heading);
+    font-size: calc(2rem * var(--heading-scale));
+    color: var(--gold-color);
+    margin-top: 0;
+    margin-bottom: 0.4em;
+    border-bottom: 1px solid color-mix(in oklab, var(--gold-color) 32%, transparent);
+    padding-bottom: 0.24em;
+}
+
+#document-content h2 {
+    font-family: 'Merriweather', Georgia, serif;
+    font-size: calc(1.46rem * var(--heading-scale));
+    color: var(--gold-color);
+    margin-top: 1.25em;
+    margin-bottom: 0.35em;
+}
+
+#document-content h3,
+#document-content h4,
+#document-content h5,
+#document-content h6 {
+    font-family: var(--font-heading);
+    font-size: calc(1.22rem * var(--heading-scale));
+    color: var(--text-primary);
+    margin-top: 1.1em;
+}
+
+#document-content a {
+    color: var(--accent-color);
+}
+
+#document-content blockquote {
+    margin-left: 0;
+    padding: 0.6rem 1rem;
+    border-left: 3px solid color-mix(in oklab, var(--gold-color) 60%, transparent);
+    color: var(--text-muted);
+    background: rgba(200, 169, 94, 0.08);
+    border-radius: 0 6px 6px 0;
+}
+
+body.light-mode #document-content blockquote {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+#document-content pre {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(15, 23, 42, 0.35);
+    padding: 14px;
+    overflow: auto;
+}
+
+body.light-mode #document-content pre {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+#document-content code {
+    font-family: Consolas, 'Courier New', monospace;
+}
+
+#document-content img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+/* Hide inline auto-toc (we use sidebar TOC) */
+#document-content .auto-toc {
+    display: none;
+}
+
+/* Ensure headings never inherit background from any parent */
+#document-content h3,
+#document-content h4,
+#document-content h5,
+#document-content h6 {
+    background: transparent;
+}
+
+@media (max-width: 1300px) {
+    #document-container {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+}

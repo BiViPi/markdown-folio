@@ -1,0 +1,15 @@
+node_modules/
+src/
+webview/
+*.config.ts
+*.map
+.vscode/
+audit-*.md
+design-visual-logo/
+scripts/
+font-preview.html
+ARCHITECTURE.md
+README-VN.md
+
+package-lock.json
+tsconfig.json

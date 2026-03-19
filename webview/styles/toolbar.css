@@ -1,0 +1,329 @@
+#toolbar {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--toolbar-border);
+    backdrop-filter: blur(20px);
+    background: linear-gradient(90deg, #0a1640 0%, #101f4d 32%, #1a1b2d 62%, #302207 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+body.light-mode #toolbar {
+    background: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
+}
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    color: var(--gold-color);
+    border-radius: 10px;
+    padding: 7px 10px;
+    cursor: pointer;
+}
+
+.toolbar-btn:hover {
+    background: rgba(200, 169, 94, 0.14);
+}
+
+.toolbar-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
+
+.tb-label {
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0.9;
+}
+
+.toolbar-sep {
+    width: 1px;
+    height: 24px;
+    background: color-mix(in oklab, var(--gold-color) 35%, transparent);
+}
+
+/* Export PDF pill — dropdown trigger, visually slightly filled vs format pills */
+.export-pdf-toggle {
+    background: rgba(200, 169, 94, 0.08) !important;
+}
+
+.export-pdf-toggle:hover {
+    background: rgba(200, 169, 94, 0.2) !important;
+}
+
+body.light-mode .export-pdf-toggle {
+    background: rgba(139, 101, 16, 0.07) !important;
+}
+
+body.light-mode .export-pdf-toggle:hover {
+    background: rgba(139, 101, 16, 0.14) !important;
+}
+
+/* Compact export format pills — HTML / PNG / DOCX */
+.export-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in oklab, var(--gold-color) 45%, transparent);
+    background: transparent;
+    color: var(--gold-color);
+    border-radius: 7px;
+    padding: 4px 9px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.export-pill:hover {
+    background: rgba(200, 169, 94, 0.14);
+    border-color: var(--gold-color);
+}
+
+body.light-mode .export-pill {
+    color: #8b6510;
+    border-color: rgba(139, 101, 16, 0.35);
+}
+
+body.light-mode .export-pill:hover {
+    background: rgba(139, 101, 16, 0.08);
+    border-color: rgba(139, 101, 16, 0.6);
+}
+
+.dropdown-menu {
+    position: fixed;
+    top: 74px;
+    min-width: 230px;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--toolbar-border);
+    background: linear-gradient(160deg, #0d1d48 0%, #131520 55%, #1e1800 100%);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 1001;
+}
+
+body.light-mode .dropdown-menu {
+    background: linear-gradient(160deg, #dde3f8 0%, #ede8d8 60%, #f5edd0 100%);
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+#pdf-dropdown {
+    left: calc(50% - 310px);
+}
+
+#png-dropdown {
+    left: calc(50% - 170px);
+    min-width: 160px;
+}
+
+#settings-dropdown {
+    right: calc(50% - 310px);
+    min-width: 260px;
+}
+
+.popover-group {
+    margin-bottom: 10px;
+}
+
+.popover-group:last-child {
+    margin-bottom: 0;
+}
+
+.pop-section-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--gold-color) 75%, #666);
+    margin-bottom: 6px;
+}
+
+.orient-row,
+.size-row,
+.set-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.orient-btn,
+.size-chip,
+.set-chip {
+    border: 1px solid color-mix(in oklab, var(--gold-color) 38%, transparent);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    border-radius: 7px;
+    padding: 5px 9px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.orient-btn.active,
+.size-chip.active,
+.set-chip.active {
+    background: rgba(200, 169, 94, 0.16);
+    color: var(--gold-color);
+    border-color: color-mix(in oklab, var(--gold-color) 65%, transparent);
+}
+
+.set-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.set-row:last-child {
+    margin-bottom: 0;
+}
+
+.set-row-label {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.set-toggle {
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.12);
+    position: relative;
+    cursor: pointer;
+}
+
+.set-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #747f93;
+    transition: left 0.15s ease;
+}
+
+.set-toggle.on {
+    background: rgba(200, 169, 94, 0.2);
+    border-color: color-mix(in oklab, var(--gold-color) 72%, transparent);
+}
+
+.set-toggle.on::after {
+    left: 18px;
+    background: var(--gold-color);
+}
+
+.zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zoom-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in oklab, var(--gold-color) 32%, transparent);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--gold-color);
+    cursor: pointer;
+}
+
+#zoom-label {
+    font-size: 11px;
+    min-width: 44px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.popover-divider {
+    height: 1px;
+    background: color-mix(in oklab, var(--gold-color) 30%, transparent);
+    margin: 8px 0;
+}
+
+#export-pdf {
+    width: 100%;
+    justify-content: space-between;
+    border: 1px solid color-mix(in oklab, var(--gold-color) 35%, transparent);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+#export-pdf:hover {
+    background: rgba(200, 169, 94, 0.16);
+}
+
+.export-alt-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.alt-export-btn {
+    flex: 1;
+    min-width: 52px;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.alt-export-btn:hover {
+    background: rgba(200, 169, 94, 0.12);
+    border-color: color-mix(in oklab, var(--gold-color) 35%, transparent);
+    color: var(--gold-color);
+}
+
+body.light-mode .alt-export-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: var(--text-muted);
+}
+
+body.light-mode .alt-export-btn:hover {
+    background: rgba(139, 101, 16, 0.08);
+    border-color: rgba(139, 101, 16, 0.3);
+    color: #8b6510;
+}
+
+#export-pdf-badge {
+    font-size: 10px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    background: rgba(200, 169, 94, 0.18);
+    color: var(--gold-color);
+}
+
+@media (max-width: 1100px) {
+    #pdf-dropdown {
+        left: 12px;
+    }
+
+    #settings-dropdown {
+        right: 12px;
+    }
+}

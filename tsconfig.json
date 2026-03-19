@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "module": "NodeNext",
+        "target": "ESNext",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "strict": true,
+        "moduleResolution": "NodeNext",
+        "outDir": "dist",
+        "rootDir": "./",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*",
+        "webview/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        ".vscode-test.js"
+    ]
+}

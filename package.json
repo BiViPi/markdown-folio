@@ -1,0 +1,235 @@
+{
+  "name": "markdown-folio",
+  "displayName": "Markdown Folio",
+  "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX math, Mermaid diagrams, and custom typography.",
+  "version": "1.0.1",
+  "icon": "images/icon.png",
+  "publisher": "phubui",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization",
+    "Formatters"
+  ],
+  "keywords": [
+    "markdown",
+    "preview",
+    "pdf",
+    "export",
+    "mermaid",
+    "katex",
+    "math",
+    "docx",
+    "word",
+    "typography"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phubui/markdown-folio"
+  },
+  "galleryBanner": {
+    "color": "#0d1d48",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "*",
+    "onLanguage:markdown",
+    "onCommand:markdownFolio.openPreview",
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "markdownFolio.customEditor",
+        "displayName": "Markdown Folio Preview",
+        "selector": [
+          { "filenamePattern": "*.md" }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "markdownFolio.openPreview",
+        "title": "Markdown Folio: Open Preview",
+        "category": "Markdown Folio",
+        "icon": "$(layout-panel-off)"
+      },
+      {
+        "command": "markdownFolio.exportPdf",
+        "title": "Markdown Folio: Export PDF",
+        "category": "Markdown Folio"
+      },
+      {
+        "command": "markdownFolio.exportDocx",
+        "title": "Markdown Folio: Export DOCX",
+        "category": "Markdown Folio"
+      },
+      {
+        "command": "markdownFolio.exportHtml",
+        "title": "Markdown Folio: Export HTML",
+        "category": "Markdown Folio"
+      },
+      {
+        "command": "markdownFolio.exportPngFull",
+        "title": "Markdown Folio: Export PNG (Full Page)",
+        "category": "Markdown Folio"
+      },
+      {
+        "command": "markdownFolio.exportPngPages",
+        "title": "Markdown Folio: Export PNG (Pages)",
+        "category": "Markdown Folio"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markdownFolio.openPreview",
+          "group": "navigation",
+          "when": "resourceLangId == markdown"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "markdownFolio.openPreview",
+          "when": "resourceLangId == markdown"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Markdown Folio",
+      "properties": {
+        "markdownFolio.headingFont": {
+          "type": "string",
+          "default": "'DM Serif Display', Georgia, serif",
+          "description": "Font family for headings (h1–h6). Use any font installed on your system, e.g. 'Palatino Linotype, serif'."
+        },
+        "markdownFolio.bodyFont": {
+          "type": "string",
+          "default": "'DM Sans', 'Segoe UI', system-ui, sans-serif",
+          "description": "Font family for body text. Use any font installed on your system, e.g. 'Georgia, serif'."
+        },
+        "markdownFolio.fontSize": {
+          "type": "integer",
+          "default": 16,
+          "enum": [
+            14,
+            15,
+            16,
+            18
+          ],
+          "description": "Font size in pixels."
+        },
+        "markdownFolio.headingSize": {
+          "type": "string",
+          "default": "M",
+          "enum": [
+            "S",
+            "M",
+            "L"
+          ],
+          "description": "Heading size scale: S (small), M (medium, default), L (large)."
+        },
+        "markdownFolio.lineSpacing": {
+          "type": "string",
+          "default": "normal",
+          "enum": [
+            "compact",
+            "normal",
+            "relaxed"
+          ],
+          "description": "Line spacing height."
+        },
+        "markdownFolio.pageWidth": {
+          "type": "string",
+          "default": "standard",
+          "enum": [
+            "narrow",
+            "standard",
+            "wide"
+          ],
+          "description": "Width of the virtual A4 page."
+        },
+        "markdownFolio.showTocSidebar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Table of Contents sidebar in the preview panel."
+        },
+        "markdownFolio.showToc": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show/hide Table of Contents."
+        },
+        "markdownFolio.tocPosition": {
+          "type": "string",
+          "default": "sidebar",
+          "enum": [
+            "sidebar",
+            "inline"
+          ],
+          "description": "Position of the TOC."
+        },
+        "markdownFolio.theme": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "dark",
+            "light",
+            "auto"
+          ],
+          "description": "Preview theme."
+        },
+        "markdownFolio.showHeader": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show header in exported documents."
+        },
+        "markdownFolio.showFooter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show footer with page numbers in exported documents."
+        },
+        "markdownFolio.watermarkText": {
+          "type": "string",
+          "default": "",
+          "description": "Watermark text to display on pages."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "dev": "npm-run-all --parallel dev:ext dev:webview",
+    "dev:ext": "vite build -c vite.extension.config.ts --watch",
+    "dev:webview": "vite build -c vite.webview.config.ts --watch",
+    "build": "npm run clean && vite build -c vite.extension.config.ts && vite build -c vite.webview.config.ts && npm run copy:katex",
+    "watch": "npm run dev:ext",
+    "test": "node ./.vscode-test.js",
+    "copy:katex": "node scripts/copy-katex-assets.cjs"
+  },
+  "devDependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/dm-serif-display": "^5.2.8",
+    "@fontsource/merriweather": "^5.2.11",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  },
+  "dependencies": {
+    "@vscode/markdown-it-katex": "^1.0.1",
+    "html-to-docx": "^1.8.0",
+    "katex": "^0.16.38",
+    "markdown-it": "^14.0.0",
+    "markdown-it-anchor": "^8.6.7",
+    "markdown-it-toc-done-right": "^4.2.0",
+    "mermaid": "^11.0.0",
+    "pdf-lib": "^1.17.1",
+    "puppeteer-core": "^22.0.0"
+  }
+}
