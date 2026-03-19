@@ -4,7 +4,7 @@
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX math, Mermaid diagrams, and custom typography.",
   "version": "1.0.1",
   "icon": "images/icon.png",
-  "publisher": "phubui",
+  "publisher": "BiViPi",
   "engines": {
     "vscode": "^1.85.0"
   },
