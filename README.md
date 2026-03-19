@@ -1,6 +1,6 @@
 # Markdown Folio
 
-English | [Tiếng Việt](https://github.com/phubui/markdown-folio/blob/main/README-VN.md)
+English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/README-VN.md)
 
 > Transform your raw Markdown files into polished, print-ready documents — right inside VS Code.
 
@@ -9,10 +9,10 @@ English | [Tiếng Việt](https://github.com/phubui/markdown-folio/blob/main/RE
 ## Preview
 
 **Light Mode**
-![Markdown Folio — Light Mode](images/light_mode.png)
+![Markdown Folio — Light Mode](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/light_mode.png)
 
 **Dark Mode**
-![Markdown Folio — Dark Mode](images/dark_mode.png)
+![Markdown Folio — Dark Mode](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/dark_mode.png)
 
 ---
 
@@ -39,4 +39,4 @@ English | [Tiếng Việt](https://github.com/phubui/markdown-folio/blob/main/RE
 
 ## Feedback
 
-Found a bug or have a suggestion? [Open an issue on GitHub](https://github.com/phubui/markdown-folio/issues).
+Found a bug or have a suggestion? [Open an issue on GitHub](https://github.com/BiViPi/markdown-folio/issues).
