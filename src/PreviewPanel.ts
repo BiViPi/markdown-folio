@@ -171,7 +171,7 @@ export class PreviewPanel {
 
     private _guardContent(): boolean {
         if (!this._lastRenderedHtml) {
-            vscode.window.showWarningMessage('Markdown Folio: Chưa có nội dung để xuất. Hãy mở file Markdown trước.');
+            vscode.window.showWarningMessage('Markdown Folio: No content to export. Please open a Markdown file first.');
             return false;
         }
         return true;
@@ -207,7 +207,7 @@ export class PreviewPanel {
             await vscode.window.withProgress(
                 {
                     location: vscode.ProgressLocation.Notification,
-                    title: 'Markdown Folio: Đang xuất PDF...',
+                    title: 'Markdown Folio: Exporting PDF...',
                     cancellable: false,
                 },
                 async () => {
@@ -221,14 +221,14 @@ export class PreviewPanel {
             );
 
             const open = await vscode.window.showInformationMessage(
-                `PDF đã xuất: ${path.basename(saveUri.fsPath)}`,
-                'Mở file'
+                `PDF exported: ${path.basename(saveUri.fsPath)}`,
+                'Open file'
             );
-            if (open === 'Mở file') {
+            if (open === 'Open file') {
                 vscode.env.openExternal(saveUri);
             }
         } catch (err: any) {
-            vscode.window.showErrorMessage(`Markdown Folio: Export PDF thất bại — ${err.message}`);
+            vscode.window.showErrorMessage(`Markdown Folio: PDF export failed — ${err.message}`);
         }
     }
 
@@ -254,16 +254,16 @@ export class PreviewPanel {
             });
 
             await vscode.window.withProgress(
-                { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Đang xuất HTML...', cancellable: false },
+                { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting HTML...', cancellable: false },
                 async () => { HtmlExporter.export(exportHtml, saveUri.fsPath); }
             );
 
             const open = await vscode.window.showInformationMessage(
-                `HTML đã xuất: ${path.basename(saveUri.fsPath)}`, 'Mở file'
+                `HTML exported: ${path.basename(saveUri.fsPath)}`, 'Open file'
             );
-            if (open === 'Mở file') { vscode.env.openExternal(saveUri); }
+            if (open === 'Open file') { vscode.env.openExternal(saveUri); }
         } catch (err: any) {
-            vscode.window.showErrorMessage(`Markdown Folio: Export HTML thất bại — ${err.message}`);
+            vscode.window.showErrorMessage(`Markdown Folio: HTML export failed — ${err.message}`);
         }
     }
 
@@ -288,37 +288,37 @@ export class PreviewPanel {
                 if (!saveUri) { return; }
 
                 await vscode.window.withProgress(
-                    { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Đang xuất PNG...', cancellable: false },
+                    { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting PNG...', cancellable: false },
                     async () => {
                         await PngExporter.export(pngHtml, { outputPath: saveUri.fsPath, mode: 'full' });
                     }
                 );
                 const open = await vscode.window.showInformationMessage(
-                    `PNG đã xuất: ${path.basename(saveUri.fsPath)}`, 'Mở file'
+                    `PNG exported: ${path.basename(saveUri.fsPath)}`, 'Open file'
                 );
-                if (open === 'Mở file') { vscode.env.openExternal(saveUri); }
+                if (open === 'Open file') { vscode.env.openExternal(saveUri); }
             } else {
                 // Pages mode: chọn folder
                 const folderUri = await vscode.window.showSaveDialog({
                     defaultUri: vscode.Uri.file(path.join(path.dirname(this._document.fileName), `${baseName}-pages`)),
                     filters: { 'Folder name (no extension)': [''] },
-                    title: 'Chọn thư mục xuất PNG Pages',
+                    title: 'Select output folder for PNG pages',
                 });
                 if (!folderUri) { return; }
 
                 await vscode.window.withProgress(
-                    { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Đang xuất PNG Pages...', cancellable: false },
+                    { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting PNG pages...', cancellable: false },
                     async () => {
                         await PngExporter.export(pngHtml, { outputPath: folderUri.fsPath, mode: 'pages' });
                     }
                 );
                 const open = await vscode.window.showInformationMessage(
-                    `PNG Pages đã xuất vào: ${path.basename(folderUri.fsPath)}`, 'Mở thư mục'
+                    `PNG pages exported to: ${path.basename(folderUri.fsPath)}`, 'Open folder'
                 );
-                if (open === 'Mở thư mục') { vscode.env.openExternal(folderUri); }
+                if (open === 'Open folder') { vscode.env.openExternal(folderUri); }
             }
         } catch (err: any) {
-            vscode.window.showErrorMessage(`Markdown Folio: Export PNG thất bại — ${err.message}`);
+            vscode.window.showErrorMessage(`Markdown Folio: PNG export failed — ${err.message}`);
         }
     }
 
@@ -336,7 +336,7 @@ export class PreviewPanel {
             const settings = SettingsManager.read();
 
             await vscode.window.withProgress(
-                { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Đang xuất DOCX...', cancellable: false },
+                { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting DOCX...', cancellable: false },
                 async () => {
                     await DocxExporter.export(this._lastRenderedHtml, {
                         outputPath: saveUri.fsPath,
@@ -348,11 +348,11 @@ export class PreviewPanel {
             );
 
             const open = await vscode.window.showInformationMessage(
-                `DOCX đã xuất: ${path.basename(saveUri.fsPath)}`, 'Mở file'
+                `DOCX exported: ${path.basename(saveUri.fsPath)}`, 'Open file'
             );
-            if (open === 'Mở file') { vscode.env.openExternal(saveUri); }
+            if (open === 'Open file') { vscode.env.openExternal(saveUri); }
         } catch (err: any) {
-            vscode.window.showErrorMessage(`Markdown Folio: Export DOCX thất bại — ${err.message}`);
+            vscode.window.showErrorMessage(`Markdown Folio: DOCX export failed — ${err.message}`);
         }
     }
 
