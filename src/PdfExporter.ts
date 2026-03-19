@@ -1,6 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import puppeteer from 'puppeteer-core';
+import { PDFDocument, PDFName, PDFDict, PDFRef, PDFNumber, PDFArray, PDFString } from 'pdf-lib';
 
 export interface PdfOptions {
     orientation: 'portrait' | 'landscape';
@@ -59,8 +61,6 @@ export class PdfExporter {
     }
 
     static async export(html: string, options: PdfOptions): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const puppeteer = require('puppeteer-core');
         const chromePath = PdfExporter.findChromePath();
 
         const tmpFile = path.join(os.tmpdir(), `mf-export-${Date.now()}.html`);
@@ -142,8 +142,6 @@ export class PdfExporter {
         pageWidthMm: number,
         pageHeightMm: number
     ): Promise<Uint8Array> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { PDFDocument, PDFName, PDFDict, PDFRef, PDFNumber, PDFArray, PDFString } = require('pdf-lib');
 
         const pdfDoc = await PDFDocument.load(pdfBytes);
         const pages = pdfDoc.getPages();

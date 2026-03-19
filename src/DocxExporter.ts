@@ -1,6 +1,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import HTMLtoDOCX from 'html-to-docx';
+import JSZip from 'jszip';
+import katex from 'katex';
+import puppeteer from 'puppeteer-core';
 import { PdfExporter } from './PdfExporter';
 import { PdfSettings } from './HtmlBuilder';
 import { MathMlToOmml } from './MathMlToOmml';
@@ -16,10 +20,6 @@ type OmmlMap = Map<number, { omml: string; isDisplay: boolean }>;
 
 export class DocxExporter {
     static async export(html: string, options: DocxOptions): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const HTMLtoDOCX = require('html-to-docx');
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const JSZip = require('jszip');
 
         const { processed, ommlMap } = await DocxExporter._preprocess(html, options.distDir);
 
@@ -170,9 +170,6 @@ export class DocxExporter {
      * No browser required.
      */
     private static _replaceKatexWithOmml(html: string): { processed: string; ommlMap: OmmlMap } {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const katex = require('katex');
-
         const ommlMap: OmmlMap = new Map();
         const entries: { start: number; end: number; id: number; omml: string; isDisplay: boolean }[] = [];
         let nextId = 0;
@@ -255,8 +252,6 @@ export class DocxExporter {
         }
         if (sources.length === 0) { return html; }
 
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const puppeteer = require('puppeteer-core');
         let chromePath: string;
         try {
             chromePath = PdfExporter.findChromePath();

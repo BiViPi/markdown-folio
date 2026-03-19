@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import puppeteer from 'puppeteer-core';
 import { PdfExporter } from './PdfExporter';
 
 export interface PngOptions {
@@ -13,8 +14,6 @@ export interface PngOptions {
 
 export class PngExporter {
     static async export(html: string, options: PngOptions): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const puppeteer = require('puppeteer-core');
         const chromePath = PdfExporter.findChromePath();
 
         const pageW = options.pageWidthPx ?? 794;
