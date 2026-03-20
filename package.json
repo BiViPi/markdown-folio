@@ -2,7 +2,7 @@
   "name": "markdown-folio",
   "displayName": "Markdown Folio",
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX math, Mermaid diagrams, and custom typography.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "icon": "images/icon.png",
   "publisher": "BiViPi",
   "engines": {
@@ -27,7 +27,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/phubui/markdown-folio"
+    "url": "https://github.com/BiViPi/markdown-folio"
   },
   "galleryBanner": {
     "color": "#0d1d48",

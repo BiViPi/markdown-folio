@@ -6,6 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.5] — 2026-03-21
+
+### Fixed
+- Consistent GitHub organization name (BiViPi) used across all links (README, package.json).
+
 ## [1.0.4] — 2026-03-19
 
 ### Fixed

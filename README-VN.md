@@ -1,6 +1,6 @@
 # Markdown Folio
 
-[English](https://github.com/phubui/markdown-folio/blob/main/README.md) | Tiếng Việt
+[English](https://github.com/BiViPi/markdown-folio/blob/main/README.md) | Tiếng Việt
 
 > Biến file Markdown thô thành tài liệu hoàn chỉnh, sẵn sàng in ấn — ngay trong VS Code.
 
@@ -39,4 +39,4 @@
 
 ## Góp ý & Báo lỗi
 
-Phát hiện lỗi hoặc có đề xuất? [Mở issue trên GitHub](https://github.com/phubui/markdown-folio/issues).
+Phát hiện lỗi hoặc có đề xuất? [Mở issue trên GitHub](https://github.com/BiViPi/markdown-folio/issues).
