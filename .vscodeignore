@@ -13,3 +13,4 @@ README-VN.md
 
 package-lock.json
 tsconfig.json
+.env
