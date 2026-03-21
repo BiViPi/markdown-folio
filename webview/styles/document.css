@@ -142,3 +142,37 @@ body.light-mode #document-content pre {
         padding-left: 18px;
     }
 }
+
+/* Table Styles */
+#document-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    font-size: 0.95em;
+}
+
+#document-content th,
+#document-content td {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+
+#document-content th {
+    background: rgba(15, 23, 42, 0.4);
+    font-weight: 600;
+    color: var(--gold-color);
+}
+
+body.light-mode #document-content th {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+#document-content tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+body.light-mode #document-content tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
+}

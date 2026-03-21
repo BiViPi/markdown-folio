@@ -68,7 +68,7 @@ export class HtmlBuilder {
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
             window._mermaidDone = false;
-            mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+            mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
             mermaid.run({ querySelector: '.mermaid' }).then(function() {
                 window._mermaidDone = true;
             }).catch(function() {
@@ -154,7 +154,7 @@ export class HtmlBuilder {
                 var pre = el.closest('pre');
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
-            mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'neutral', securityLevel: 'loose' });
+            mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' });
         })();
     </script>
 </body>

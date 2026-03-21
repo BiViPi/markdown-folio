@@ -2,7 +2,7 @@
   "name": "markdown-folio",
   "displayName": "Markdown Folio",
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX math, Mermaid diagrams, and custom typography.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "icon": "images/icon.png",
   "publisher": "BiViPi",
   "engines": {
@@ -35,7 +35,6 @@
   },
   "activationEvents": [
     "*",
-    "onLanguage:markdown",
     "onCommand:markdownFolio.openPreview",
     "onStartupFinished"
   ],
@@ -106,7 +105,7 @@
       "properties": {
         "markdownFolio.headingFont": {
           "type": "string",
-          "default": "'DM Serif Display', Georgia, serif",
+          "default": "'Merriweather', Georgia, serif",
           "description": "Font family for headings (h1–h6). Use any font installed on your system, e.g. 'Palatino Linotype, serif'."
         },
         "markdownFolio.bodyFont": {

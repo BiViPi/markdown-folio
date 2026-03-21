@@ -6,6 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.6] — 2026-03-21
+
+### Added
+- Table styling: borders and zebra-stripe backgrounds for better data readability.
+
+### Changed
+- Default heading font changed from 'DM Serif Display' to 'Merriweather' for superior Vietnamese character support.
+- Mermaid Light Mode theme changed from 'neutral' to 'default' for better aesthetics.
+
+### Fixed
+- Preview theme selection (Dark/Light) is now correctly saved to VS Code settings.
+- Mermaid theme now correctly initializes and updates when toggling modes.
+
 ## [1.0.5] — 2026-03-21
 
 ### Fixed

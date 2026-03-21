@@ -13,7 +13,7 @@
     --page-shadow: 0 20px 42px rgba(0, 0, 0, 0.55);
     --page-bg: linear-gradient(168deg, #152847 0%, #1a2f4a 26%, #1e2638 56%, #1f2218 78%, #211d10 100%);
     --font-main: 'Inter', 'Segoe UI', sans-serif;
-    --font-heading: 'DM Serif Display', Georgia, serif;
+    --font-heading: 'Merriweather', Georgia, serif;
     --font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
     --font-size-body: 16px;
     --line-height-body: 1.72;

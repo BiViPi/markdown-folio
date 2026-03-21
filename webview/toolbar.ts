@@ -23,6 +23,11 @@ export class Toolbar {
                     : '<path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>';
             }
 
+            this.vscode.postMessage({
+                type: 'update-settings',
+                payload: { theme: currentIsLight ? 'light' : 'dark' }
+            });
+
             mermaid.initialize({
                 theme: currentIsLight ? 'default' : 'dark',
                 startOnLoad: false,
@@ -158,7 +163,7 @@ export class Toolbar {
                             type: 'update-settings',
                             payload: {
                                 bodyFont: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-                                headingFont: "'DM Serif Display', Georgia, serif"
+                                headingFont: "'Merriweather', Georgia, serif"
                             }
                         });
                     } else {
