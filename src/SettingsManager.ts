@@ -7,6 +7,7 @@ export interface PreviewSettings {
     headingSize: 'S' | 'M' | 'L';
     lineSpacing: 'compact' | 'normal' | 'relaxed';
     pageWidth: 'narrow' | 'standard' | 'wide';
+    showToolbar: boolean;
     showTocSidebar: boolean;
     theme: 'dark' | 'light' | 'auto';
 }
@@ -18,6 +19,7 @@ const DEFAULTS: PreviewSettings = {
     headingSize: 'M',
     lineSpacing: 'normal',
     pageWidth: 'standard',
+    showToolbar: true,
     showTocSidebar: true,
     theme: 'auto',
 };
@@ -34,6 +36,7 @@ export class SettingsManager {
             headingSize: cfg.get<'S' | 'M' | 'L'>('headingSize', DEFAULTS.headingSize),
             lineSpacing: cfg.get<'compact' | 'normal' | 'relaxed'>('lineSpacing', DEFAULTS.lineSpacing),
             pageWidth: cfg.get<'narrow' | 'standard' | 'wide'>('pageWidth', DEFAULTS.pageWidth),
+            showToolbar: cfg.get<boolean>('showToolbar', DEFAULTS.showToolbar),
             showTocSidebar: cfg.get<boolean>('showTocSidebar', DEFAULTS.showTocSidebar),
             theme: cfg.get<'dark' | 'light' | 'auto'>('theme', DEFAULTS.theme),
         };

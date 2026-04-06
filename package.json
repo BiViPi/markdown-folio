@@ -154,6 +154,11 @@
           ],
           "description": "Width of the virtual A4 page."
         },
+        "markdownFolio.showToolbar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the toolbar in the preview panel."
+        },
         "markdownFolio.showTocSidebar": {
           "type": "boolean",
           "default": true,
