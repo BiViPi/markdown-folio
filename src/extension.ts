@@ -24,6 +24,25 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(openPreview);
+
+    // Status bar button — one-click access to preview for markdown files
+    const statusBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+    statusBtn.text = '$(book) Folio';
+    statusBtn.tooltip = 'Open Markdown Folio Preview';
+    statusBtn.command = 'markdownFolio.openPreview';
+    context.subscriptions.push(statusBtn);
+
+    function updateStatusBar() {
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document.languageId === 'markdown') {
+            statusBtn.show();
+        } else {
+            statusBtn.hide();
+        }
+    }
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateStatusBar));
+    updateStatusBar();
+
     context.subscriptions.push(channel);
     channel.appendLine('Markdown Folio activated.');
 }
