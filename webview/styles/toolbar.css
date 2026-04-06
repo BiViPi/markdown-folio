@@ -13,6 +13,26 @@
     backdrop-filter: blur(20px);
     background: linear-gradient(90deg, #0a1640 0%, #101f4d 32%, #1a1b2d 62%, #302207 100%);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+body.toolbar-collapsed #toolbar {
+    padding: 4px;
+    border-radius: 999px;
+    top: 18px;
+    left: calc(100% - 24px) !important;
+    transform: translateX(-100%) !important;
+}
+
+body.toolbar-collapsed #toolbar .export-pill,
+body.toolbar-collapsed #toolbar .toolbar-btn:not(#toolbar-toggle),
+body.toolbar-collapsed #toolbar .toolbar-sep,
+body.toolbar-collapsed #toolbar .zoom-controls {
+    display: none;
+}
+
+body.toolbar-collapsed #document-container {
+    padding-top: 24px;
 }
 
 body.light-mode #toolbar {
