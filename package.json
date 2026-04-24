@@ -181,7 +181,8 @@
             "ivory",
             "serene",
             "cyberpunk",
-            "dracula"
+            "dracula",
+            "github"
           ],
           "description": "Preview theme."
         },

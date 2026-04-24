@@ -100,7 +100,7 @@ function applySettings(settings: {
     lineSpacing?: string;
     pageWidth?: string;
     showTocSidebar?: boolean;
-    theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula';
+    theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
 }) {
     const root = document.documentElement;
     if (settings.headingFont) { root.style.setProperty('--font-heading', settings.headingFont); }
@@ -128,7 +128,7 @@ function applySettings(settings: {
         }
     }
     if (settings.theme !== undefined) {
-        document.body.classList.remove('ivory-mode', 'admiral-mode', 'serene-mode', 'cyberpunk-mode', 'dracula-mode');
+        document.body.classList.remove('ivory-mode', 'admiral-mode', 'serene-mode', 'cyberpunk-mode', 'dracula-mode', 'github-mode');
         
         if (settings.theme === 'ivory') {
             document.body.classList.add('ivory-mode');
@@ -140,6 +140,8 @@ function applySettings(settings: {
             document.body.classList.add('cyberpunk-mode');
         } else if (settings.theme === 'dracula') {
             document.body.classList.add('dracula-mode');
+        } else if (settings.theme === 'github') {
+            document.body.classList.add('github-mode');
         }
         
         // Update active state in theme dropdown
