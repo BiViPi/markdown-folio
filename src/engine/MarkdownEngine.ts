@@ -2,6 +2,7 @@ import MarkdownIt from 'markdown-it';
 import markdownItAnchor from 'markdown-it-anchor';
 import markdownItToc from 'markdown-it-toc-done-right';
 import markdownItKatex from '@vscode/markdown-it-katex';
+import hljs from 'highlight.js';
 import { slugify } from '../shared/types';
 
 export class MarkdownEngine {
@@ -11,7 +12,18 @@ export class MarkdownEngine {
         this.md = new MarkdownIt({
             html: true,
             linkify: true,
-            typographer: false
+            typographer: false,
+            highlight: (str, lang) => {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return '<pre><code class="hljs language-' + lang + '">' +
+                            hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                            '</code></pre>';
+                    } catch (__) { }
+                }
+
+                return '<pre><code class="hljs">' + this.md.utils.escapeHtml(str) + '</code></pre>';
+            }
         })
             .use(markdownItAnchor, {
                 permalink: false,

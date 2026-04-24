@@ -8,7 +8,7 @@ export interface PreviewSettings {
     lineSpacing: 'compact' | 'normal' | 'relaxed';
     pageWidth: 'narrow' | 'standard' | 'wide';
     showTocSidebar: boolean;
-    theme: 'dark' | 'light' | 'sepia' | 'midnight' | 'auto';
+    theme: 'obsidian' | 'ivory' | 'sepia' | 'midnight';
 }
 
 const DEFAULTS: PreviewSettings = {
@@ -19,7 +19,7 @@ const DEFAULTS: PreviewSettings = {
     lineSpacing: 'normal',
     pageWidth: 'standard',
     showTocSidebar: true,
-    theme: 'auto',
+    theme: 'ivory',
 };
 
 export class SettingsManager {
@@ -35,7 +35,7 @@ export class SettingsManager {
             lineSpacing: cfg.get<'compact' | 'normal' | 'relaxed'>('lineSpacing', DEFAULTS.lineSpacing),
             pageWidth: cfg.get<'narrow' | 'standard' | 'wide'>('pageWidth', DEFAULTS.pageWidth),
             showTocSidebar: cfg.get<boolean>('showTocSidebar', DEFAULTS.showTocSidebar),
-            theme: cfg.get<'dark' | 'light' | 'sepia' | 'midnight' | 'auto'>('theme', DEFAULTS.theme),
+            theme: cfg.get<'obsidian' | 'ivory' | 'sepia' | 'midnight'>('theme', DEFAULTS.theme),
         };
     }
 

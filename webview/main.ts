@@ -56,7 +56,7 @@ window.addEventListener('message', event => {
             // Render mermaid
             const mermaidCodes = document.querySelectorAll<HTMLElement>('.language-mermaid');
             if (mermaidCodes.length > 0) {
-                const isDarkTheme = !document.body.classList.contains('light-mode') && !document.body.classList.contains('sepia-mode');
+                const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
                 const theme = isDarkTheme ? 'dark' : 'default';
                 const nodes = Array.from(mermaidCodes);
                 nodes.forEach(el => {
@@ -79,7 +79,7 @@ window.addEventListener('message', event => {
             if (oldTheme !== document.body.className) {
                 const mermaidCodes = document.querySelectorAll<HTMLElement>('.mermaid');
                 if (mermaidCodes.length > 0) {
-                    const isDarkTheme = !document.body.classList.contains('light-mode') && !document.body.classList.contains('sepia-mode');
+                    const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
                     const theme = isDarkTheme ? 'dark' : 'default';
                     const nodes = Array.from(mermaidCodes);
                     nodes.forEach(el => el.removeAttribute('data-processed'));
@@ -100,7 +100,7 @@ function applySettings(settings: {
     lineSpacing?: string;
     pageWidth?: string;
     showTocSidebar?: boolean;
-    theme?: 'dark' | 'light' | 'auto';
+    theme?: 'obsidian' | 'ivory' | 'sepia' | 'midnight';
 }) {
     const root = document.documentElement;
     if (settings.headingFont) { root.style.setProperty('--font-heading', settings.headingFont); }
@@ -128,19 +128,15 @@ function applySettings(settings: {
         }
     }
     if (settings.theme !== undefined) {
-        document.body.classList.remove('light-mode', 'sepia-mode', 'midnight-mode');
+        document.body.classList.remove('ivory-mode', 'obsidian-mode', 'sepia-mode', 'midnight-mode');
         
-        let actualTheme = settings.theme;
-        if (actualTheme === 'auto') {
-            const isSystemLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-            actualTheme = isSystemLight ? 'light' : 'dark';
-        }
-
-        if (actualTheme === 'light') {
-            document.body.classList.add('light-mode');
-        } else if (actualTheme === 'sepia') {
+        if (settings.theme === 'ivory') {
+            document.body.classList.add('ivory-mode');
+        } else if (settings.theme === 'obsidian') {
+            document.body.classList.add('obsidian-mode');
+        } else if (settings.theme === 'sepia') {
             document.body.classList.add('sepia-mode');
-        } else if (actualTheme === 'midnight') {
+        } else if (settings.theme === 'midnight') {
             document.body.classList.add('midnight-mode');
         }
         

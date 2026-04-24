@@ -413,9 +413,13 @@ export class PreviewPanel {
             </head>
             <body>
                 <div id="toolbar">
-                    <button class="export-pill export-pdf-toggle" id="pdf-dropdown-toggle" title="Export PDF">Export PDF ▾</button>
+                    <button class="export-pill export-pdf-toggle" id="pdf-dropdown-toggle" title="Export PDF">
+                        Export PDF <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <button class="export-pill" id="export-html" title="Export HTML">HTML</button>
-                    <button class="export-pill export-pdf-toggle" id="png-dropdown-toggle" title="Export PNG">PNG ▾</button>
+                    <button class="export-pill export-pdf-toggle" id="png-dropdown-toggle" title="Export PNG">
+                        PNG <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <button class="export-pill" id="export-docx" title="Export DOCX">DOCX</button>
                     <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="settings-dropdown-toggle" title="Preview Settings">
@@ -430,7 +434,8 @@ export class PreviewPanel {
                     </div>
                     <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="theme-dropdown-toggle" title="Preview Theme">
-                        <span class="tb-label">Theme ▾</span>
+                        <span class="tb-label">Theme</span>
+                        <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="toolbar-toggle" title="Toggle Toolbar">
@@ -453,9 +458,8 @@ export class PreviewPanel {
 
                 <div id="theme-dropdown" class="dropdown-menu">
                     <div class="popover-group">
-                        <button class="toolbar-btn theme-btn" data-theme="auto"><span class="tb-label">Auto</span></button>
-                        <button class="toolbar-btn theme-btn" data-theme="dark"><span class="tb-label">Dark</span></button>
-                        <button class="toolbar-btn theme-btn" data-theme="light"><span class="tb-label">Light</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="obsidian"><span class="tb-label">Obsidian</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="ivory"><span class="tb-label">Ivory</span></button>
                         <button class="toolbar-btn theme-btn" data-theme="sepia"><span class="tb-label">Sepia</span></button>
                         <button class="toolbar-btn theme-btn" data-theme="midnight"><span class="tb-label">Midnight</span></button>
                     </div>
