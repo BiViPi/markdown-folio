@@ -12,16 +12,9 @@
     justify-content: center;
     align-items: flex-start;
     background:
-        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(30, 80, 160, 0.25) 0%, transparent 65%),
-        radial-gradient(ellipse 80% 70% at 22% 100%, rgba(160, 100, 10, 0.15) 0%, transparent 60%),
-        linear-gradient(175deg, #111e35 0%, #141e2e 40%, #181c18 70%, #1a1710 100%);
-}
-
-body.light-mode #document-container {
-    background:
-        radial-gradient(ellipse 100% 50% at 50% 0%, rgba(87, 122, 197, 0.2) 0%, transparent 62%),
-        radial-gradient(ellipse 80% 70% at 22% 100%, rgba(185, 143, 55, 0.2) 0%, transparent 58%),
-        linear-gradient(180deg, #f1f5ff 0%, #f6f2e7 100%);
+        radial-gradient(ellipse 100% 50% at 50% 0%, var(--app-bg-glow-1) 0%, transparent 65%),
+        radial-gradient(ellipse 80% 70% at 22% 100%, var(--app-bg-glow-2) 0%, transparent 60%),
+        var(--app-bg);
 }
 
 #document-paper {
@@ -94,24 +87,16 @@ body.light-mode #document-container {
     padding: 0.6rem 1rem;
     border-left: 3px solid color-mix(in oklab, var(--gold-color) 60%, transparent);
     color: var(--text-muted);
-    background: rgba(200, 169, 94, 0.08);
+    background: var(--quote-bg);
     border-radius: 0 6px 6px 0;
-}
-
-body.light-mode #document-content blockquote {
-    background: rgba(0, 0, 0, 0.04);
 }
 
 #document-content pre {
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    background: rgba(15, 23, 42, 0.35);
+    background: var(--code-bg);
     padding: 14px;
     overflow: auto;
-}
-
-body.light-mode #document-content pre {
-    background: rgba(0, 0, 0, 0.05);
 }
 
 #document-content code {
@@ -160,19 +145,11 @@ body.light-mode #document-content pre {
 }
 
 #document-content th {
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--table-th-bg);
     font-weight: 600;
     color: var(--gold-color);
 }
 
-body.light-mode #document-content th {
-    background: rgba(0, 0, 0, 0.06);
-}
-
 #document-content tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-body.light-mode #document-content tr:nth-child(even) {
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--table-tr-bg);
 }

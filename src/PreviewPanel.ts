@@ -430,8 +430,11 @@ export class PreviewPanel {
                     </div>
                     <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="theme-dropdown-toggle" title="Preview Theme">
-                        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
                         <span class="tb-label">Theme ▾</span>
+                    </button>
+                    <div class="toolbar-sep"></div>
+                    <button class="toolbar-btn" id="toolbar-toggle" title="Toggle Toolbar">
+                        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
 
@@ -544,4 +547,3 @@ function getNonce() {
     }
     return text;
 }
-

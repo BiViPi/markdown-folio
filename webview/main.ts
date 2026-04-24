@@ -20,8 +20,17 @@ function syncToolbarPosition() {
     const tb = document.getElementById('toolbar');
     if (!container || !tb) { return; }
     const rect = container.getBoundingClientRect();
-    tb.style.left = `${rect.left + rect.width / 2}px`;
+    
+    if (tb.classList.contains('collapsed')) {
+        // Pin to the right edge of the document container
+        tb.style.left = `${rect.right - 24}px`;
+        tb.style.transform = 'translateX(-100%)';
+    } else {
+        tb.style.left = `${rect.left + rect.width / 2}px`;
+        tb.style.transform = 'translateX(-50%)';
+    }
 }
+(window as any).syncToolbarPosition = syncToolbarPosition;
 
 const resizeObserver = new ResizeObserver(syncToolbarPosition);
 resizeObserver.observe(document.getElementById('document-container') ?? document.body);

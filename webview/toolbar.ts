@@ -59,6 +59,7 @@ export class Toolbar {
         this._initDropdown('png-dropdown-toggle', 'png-dropdown');
         this._initDropdown('settings-dropdown-toggle', 'settings-dropdown');
         this._initDropdown('theme-dropdown-toggle', 'theme-dropdown');
+        this._initToolbarToggle();
         this._initPaperOptions();
         this._initSettingsChips();
         this._initZoomControls();
@@ -298,5 +299,31 @@ export class Toolbar {
 
     private _closeAllDropdowns() {
         document.querySelectorAll('.dropdown-menu.show').forEach(dropdown => dropdown.classList.remove('show'));
+    }
+
+    private _initToolbarToggle() {
+        const toggle = document.getElementById('toolbar-toggle');
+        const toolbar = document.getElementById('toolbar');
+        if (!toggle || !toolbar) return;
+
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toolbar.classList.toggle('collapsed');
+            
+            // Re-sync position
+            const syncPos = (window as any).syncToolbarPosition;
+            if (typeof syncPos === 'function') {
+                syncPos();
+            }
+
+            const icon = toggle.querySelector('svg path');
+            if (icon) {
+                if (toolbar.classList.contains('collapsed')) {
+                    icon.setAttribute('d', 'M15 18l-6-6 6-6'); // < (To Expand)
+                } else {
+                    icon.setAttribute('d', 'M9 5l7 7-7 7'); // > (To Collapse)
+                }
+            }
+        });
     }
 }

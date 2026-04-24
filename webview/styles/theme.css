@@ -19,6 +19,35 @@
     --line-height-body: 1.72;
     --zoom-scale: 1;
     --heading-scale: 1;
+
+    --app-bg: linear-gradient(175deg, #111e35 0%, #141e2e 40%, #181c18 70%, #1a1710 100%);
+    --app-bg-glow-1: rgba(30, 80, 160, 0.25);
+    --app-bg-glow-2: rgba(160, 100, 10, 0.15);
+    --quote-bg: rgba(200, 169, 94, 0.08);
+    --code-bg: rgba(15, 23, 42, 0.35);
+    --table-th-bg: rgba(15, 23, 42, 0.4);
+    --table-tr-bg: rgba(255, 255, 255, 0.02);
+    --toolbar-gradient: linear-gradient(90deg, #0a1640 0%, #101f4d 32%, #1a1b2d 62%, #302207 100%);
+    --dropdown-bg: linear-gradient(160deg, #0d1d48 0%, #131520 55%, #1e1800 100%);
+    
+    --pdf-toggle-bg: rgba(200, 169, 94, 0.08);
+    --pdf-toggle-hover: rgba(200, 169, 94, 0.2);
+    --export-pill-color: var(--gold-color);
+    --export-pill-border: color-mix(in oklab, var(--gold-color) 45%, transparent);
+    --export-pill-hover-bg: rgba(200, 169, 94, 0.14);
+    --export-pill-hover-border: var(--gold-color);
+    
+    --alt-btn-bg: rgba(255, 255, 255, 0.04);
+    --alt-btn-border: rgba(255, 255, 255, 0.12);
+    --alt-btn-color: var(--text-muted);
+    --alt-btn-hover-bg: rgba(200, 169, 94, 0.12);
+    --alt-btn-hover-border: color-mix(in oklab, var(--gold-color) 35%, transparent);
+    --alt-btn-hover-color: var(--gold-color);
+
+    --sidebar-bg: linear-gradient(180deg, #0c1a38 0%, #0e1828 55%, #121408 100%);
+    --toc-item-color: rgba(255, 255, 255, 0.82);
+    --toc-item-hover-bg: rgba(255, 255, 255, 0.06);
+    --toc-item-active-bg: rgba(200, 169, 94, 0.12);
 }
 
 body.light-mode {
@@ -35,6 +64,35 @@ body.light-mode {
     --toolbar-border: rgba(166, 128, 38, 0.35);
     --page-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
     --page-bg: linear-gradient(168deg, #eef3ff 0%, #f4f7ff 40%, #f6f0df 100%);
+
+    --app-bg: linear-gradient(180deg, #f1f5ff 0%, #f6f2e7 100%);
+    --app-bg-glow-1: rgba(87, 122, 197, 0.2);
+    --app-bg-glow-2: rgba(185, 143, 55, 0.2);
+    --quote-bg: rgba(0, 0, 0, 0.04);
+    --code-bg: rgba(0, 0, 0, 0.05);
+    --table-th-bg: rgba(0, 0, 0, 0.06);
+    --table-tr-bg: rgba(0, 0, 0, 0.02);
+    --toolbar-gradient: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
+    --dropdown-bg: linear-gradient(160deg, #dde3f8 0%, #ede8d8 60%, #f5edd0 100%);
+    
+    --pdf-toggle-bg: rgba(139, 101, 16, 0.07);
+    --pdf-toggle-hover: rgba(139, 101, 16, 0.14);
+    --export-pill-color: #8b6510;
+    --export-pill-border: rgba(139, 101, 16, 0.35);
+    --export-pill-hover-bg: rgba(139, 101, 16, 0.08);
+    --export-pill-hover-border: rgba(139, 101, 16, 0.6);
+    
+    --alt-btn-bg: rgba(0, 0, 0, 0.04);
+    --alt-btn-border: rgba(0, 0, 0, 0.15);
+    --alt-btn-color: var(--text-muted);
+    --alt-btn-hover-bg: rgba(139, 101, 16, 0.08);
+    --alt-btn-hover-border: rgba(139, 101, 16, 0.3);
+    --alt-btn-hover-color: #8b6510;
+
+    --sidebar-bg: linear-gradient(180deg, #ebf1ff 0%, #f4f7ff 55%, #f8f0dd 100%);
+    --toc-item-color: var(--text-primary);
+    --toc-item-hover-bg: rgba(0, 0, 0, 0.04);
+    --toc-item-active-bg: rgba(139, 101, 16, 0.08);
 }
 
 body.sepia-mode {
@@ -50,7 +108,36 @@ body.sepia-mode {
     --toolbar-bg: rgba(250, 246, 235, 0.88);
     --toolbar-border: rgba(139, 101, 16, 0.3);
     --page-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
-    --page-bg: linear-gradient(168deg, #f4ecd8 0%, #faf6eb 40%, #fdfaf3 100%);
+    --page-bg: linear-gradient(168deg, #fdf6e3 0%, #f5ebd0 40%, #eee0c0 100%);
+    
+    --app-bg: linear-gradient(180deg, #eaddc5 0%, #e2d1b4 100%);
+    --app-bg-glow-1: rgba(180, 140, 80, 0.15);
+    --app-bg-glow-2: rgba(139, 101, 16, 0.1);
+    --quote-bg: rgba(139, 101, 16, 0.06);
+    --code-bg: rgba(139, 101, 16, 0.05);
+    --table-th-bg: rgba(139, 101, 16, 0.08);
+    --table-tr-bg: rgba(139, 101, 16, 0.03);
+    --toolbar-gradient: linear-gradient(90deg, #f0e6d2 0%, #e8dbc3 45%, #e1d1b5 100%);
+    --dropdown-bg: linear-gradient(160deg, #f4ecd8 0%, #eaddc5 60%, #e2d1b4 100%);
+    
+    --pdf-toggle-bg: rgba(139, 101, 16, 0.08);
+    --pdf-toggle-hover: rgba(139, 101, 16, 0.15);
+    --export-pill-color: #b45309;
+    --export-pill-border: rgba(139, 101, 16, 0.35);
+    --export-pill-hover-bg: rgba(139, 101, 16, 0.1);
+    --export-pill-hover-border: rgba(139, 101, 16, 0.6);
+    
+    --alt-btn-bg: rgba(139, 101, 16, 0.05);
+    --alt-btn-border: rgba(139, 101, 16, 0.15);
+    --alt-btn-color: var(--text-muted);
+    --alt-btn-hover-bg: rgba(139, 101, 16, 0.1);
+    --alt-btn-hover-border: rgba(139, 101, 16, 0.3);
+    --alt-btn-hover-color: #b45309;
+
+    --sidebar-bg: linear-gradient(180deg, #eaddc5 0%, #e2d1b4 55%, #e8dbc3 100%);
+    --toc-item-color: var(--text-primary);
+    --toc-item-hover-bg: rgba(139, 101, 16, 0.05);
+    --toc-item-active-bg: rgba(139, 101, 16, 0.1);
 }
 
 body.midnight-mode {
@@ -66,7 +153,36 @@ body.midnight-mode {
     --toolbar-bg: rgba(10, 10, 10, 0.88);
     --toolbar-border: rgba(255, 255, 255, 0.1);
     --page-shadow: 0 20px 42px rgba(0, 0, 0, 0.8);
-    --page-bg: linear-gradient(168deg, #000000 0%, #0a0a0a 50%, #121212 100%);
+    --page-bg: linear-gradient(168deg, #0f0f0f 0%, #151515 50%, #1a1a1a 100%);
+    
+    --app-bg: linear-gradient(175deg, #050505 0%, #0a0a0a 40%, #0f0f0f 70%, #141414 100%);
+    --app-bg-glow-1: rgba(255, 255, 255, 0.02);
+    --app-bg-glow-2: rgba(255, 255, 255, 0.01);
+    --quote-bg: rgba(255, 255, 255, 0.04);
+    --code-bg: rgba(255, 255, 255, 0.05);
+    --table-th-bg: rgba(255, 255, 255, 0.06);
+    --table-tr-bg: rgba(255, 255, 255, 0.02);
+    --toolbar-gradient: linear-gradient(90deg, #050505 0%, #0a0a0a 32%, #0f0f0f 62%, #141414 100%);
+    --dropdown-bg: linear-gradient(160deg, #0a0a0a 0%, #0f0f0f 55%, #141414 100%);
+    
+    --pdf-toggle-bg: rgba(255, 255, 255, 0.04);
+    --pdf-toggle-hover: rgba(255, 255, 255, 0.1);
+    --export-pill-color: var(--gold-color);
+    --export-pill-border: rgba(255, 255, 255, 0.15);
+    --export-pill-hover-bg: rgba(255, 255, 255, 0.08);
+    --export-pill-hover-border: var(--gold-color);
+    
+    --alt-btn-bg: rgba(255, 255, 255, 0.02);
+    --alt-btn-border: rgba(255, 255, 255, 0.08);
+    --alt-btn-color: var(--text-muted);
+    --alt-btn-hover-bg: rgba(255, 255, 255, 0.06);
+    --alt-btn-hover-border: rgba(255, 255, 255, 0.15);
+    --alt-btn-hover-color: var(--gold-color);
+
+    --sidebar-bg: linear-gradient(180deg, #050505 0%, #0a0a0a 55%, #050505 100%);
+    --toc-item-color: rgba(255, 255, 255, 0.82);
+    --toc-item-hover-bg: rgba(255, 255, 255, 0.04);
+    --toc-item-active-bg: rgba(255, 255, 255, 0.08);
 }
 
 * {

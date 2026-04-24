@@ -11,12 +11,22 @@
     border-radius: 14px;
     border: 1px solid var(--toolbar-border);
     backdrop-filter: blur(20px);
-    background: linear-gradient(90deg, #0a1640 0%, #101f4d 32%, #1a1b2d 62%, #302207 100%);
+    background: var(--toolbar-gradient);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    transition: width 0.3s ease, padding 0.3s ease;
 }
 
-body.light-mode #toolbar {
-    background: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
+#toolbar.collapsed {
+    padding: 4px;
+    border-radius: 50%;
+}
+
+#toolbar.collapsed > *:not(#toolbar-toggle) {
+    display: none;
+}
+
+#toolbar.collapsed .toolbar-sep {
+    display: none;
 }
 
 .toolbar-btn {
@@ -57,28 +67,20 @@ body.light-mode #toolbar {
 
 /* Export PDF pill — dropdown trigger, visually slightly filled vs format pills */
 .export-pdf-toggle {
-    background: rgba(200, 169, 94, 0.08) !important;
+    background: var(--pdf-toggle-bg) !important;
 }
 
 .export-pdf-toggle:hover {
-    background: rgba(200, 169, 94, 0.2) !important;
-}
-
-body.light-mode .export-pdf-toggle {
-    background: rgba(139, 101, 16, 0.07) !important;
-}
-
-body.light-mode .export-pdf-toggle:hover {
-    background: rgba(139, 101, 16, 0.14) !important;
+    background: var(--pdf-toggle-hover) !important;
 }
 
 /* Compact export format pills — HTML / PNG / DOCX */
 .export-pill {
     display: inline-flex;
     align-items: center;
-    border: 1px solid color-mix(in oklab, var(--gold-color) 45%, transparent);
+    border: 1px solid var(--export-pill-border);
     background: transparent;
-    color: var(--gold-color);
+    color: var(--export-pill-color);
     border-radius: 7px;
     padding: 4px 9px;
     font-size: 10px;
@@ -90,18 +92,8 @@ body.light-mode .export-pdf-toggle:hover {
 }
 
 .export-pill:hover {
-    background: rgba(200, 169, 94, 0.14);
-    border-color: var(--gold-color);
-}
-
-body.light-mode .export-pill {
-    color: #8b6510;
-    border-color: rgba(139, 101, 16, 0.35);
-}
-
-body.light-mode .export-pill:hover {
-    background: rgba(139, 101, 16, 0.08);
-    border-color: rgba(139, 101, 16, 0.6);
+    background: var(--export-pill-hover-bg);
+    border-color: var(--export-pill-hover-border);
 }
 
 .dropdown-menu {
@@ -111,14 +103,10 @@ body.light-mode .export-pill:hover {
     padding: 10px;
     border-radius: 12px;
     border: 1px solid var(--toolbar-border);
-    background: linear-gradient(160deg, #0d1d48 0%, #131520 55%, #1e1800 100%);
+    background: var(--dropdown-bg);
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
     display: none;
     z-index: 1001;
-}
-
-body.light-mode .dropdown-menu {
-    background: linear-gradient(160deg, #dde3f8 0%, #ede8d8 60%, #f5edd0 100%);
 }
 
 .dropdown-menu.show {
@@ -137,6 +125,17 @@ body.light-mode .dropdown-menu {
 #settings-dropdown {
     right: calc(50% - 310px);
     min-width: 260px;
+}
+
+#theme-dropdown {
+    right: calc(50% - 385px);
+    min-width: 100px;
+    padding: 6px;
+}
+
+#theme-dropdown .toolbar-btn {
+    padding: 5px 10px;
+    gap: 6px;
 }
 
 .popover-group {
@@ -284,30 +283,29 @@ body.light-mode .dropdown-menu {
     padding: 5px 8px;
     font-size: 11px;
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--alt-btn-bg);
+    border: 1px solid var(--alt-btn-border);
     border-radius: 6px;
-    color: var(--text-muted);
+    color: var(--alt-btn-color);
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .alt-export-btn:hover {
-    background: rgba(200, 169, 94, 0.12);
-    border-color: color-mix(in oklab, var(--gold-color) 35%, transparent);
-    color: var(--gold-color);
+    background: var(--alt-btn-hover-bg);
+    border-color: var(--alt-btn-hover-border);
+    color: var(--alt-btn-hover-color);
 }
 
-body.light-mode .alt-export-btn {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.15);
-    color: var(--text-muted);
+#theme-dropdown .popover-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-body.light-mode .alt-export-btn:hover {
-    background: rgba(139, 101, 16, 0.08);
-    border-color: rgba(139, 101, 16, 0.3);
-    color: #8b6510;
+#theme-dropdown .toolbar-btn {
+    width: 100%;
+    justify-content: flex-start;
 }
 
 #export-pdf-badge {
