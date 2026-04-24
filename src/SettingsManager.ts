@@ -8,7 +8,7 @@ export interface PreviewSettings {
     lineSpacing: 'compact' | 'normal' | 'relaxed';
     pageWidth: 'narrow' | 'standard' | 'wide';
     showTocSidebar: boolean;
-    theme: 'admiral' | 'ivory' | 'serene' | 'cyberpunk';
+    theme: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula';
 }
 
 const DEFAULTS: PreviewSettings = {
@@ -35,7 +35,7 @@ export class SettingsManager {
             lineSpacing: cfg.get<'compact' | 'normal' | 'relaxed'>('lineSpacing', DEFAULTS.lineSpacing),
             pageWidth: cfg.get<'narrow' | 'standard' | 'wide'>('pageWidth', DEFAULTS.pageWidth),
             showTocSidebar: cfg.get<boolean>('showTocSidebar', DEFAULTS.showTocSidebar),
-            theme: cfg.get<'admiral' | 'ivory' | 'serene' | 'cyberpunk'>('theme', DEFAULTS.theme),
+            theme: cfg.get<'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula'>('theme', DEFAULTS.theme),
         };
     }
 

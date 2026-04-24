@@ -6,6 +6,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] — 2026-04-06
+
+### Added
+- Added quick-access Folio button to the status bar (appears only for Markdown files).
+- Added a collapsible toolbar feature in the preview panel. The toolbar can shrink into a small pill at the top-right corner to minimize reading distractions, with its state persisted across sessions.
+
 ## [1.0.6] — 2026-03-21
 
 ### Added

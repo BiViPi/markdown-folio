@@ -227,6 +227,60 @@ body.cyberpunk-mode {
     --syntax-class: #39ff14; /* Neon Green */
 }
 
+body.dracula-mode {
+    --bg-primary: #282a36;
+    --bg-secondary: #21222c;
+    --bg-surface: #44475a;
+    --bg-surface-2: #6272a4;
+    --border-color: rgba(98, 114, 164, 0.4);
+    --text-primary: #f8f8f2;
+    --text-muted: #6272a4;
+    --accent-color: #ff79c6;
+    --gold-color: #f1fa8c; /* Yellow for inline code */
+    --toolbar-bg: rgba(40, 42, 54, 0.95);
+    --toolbar-border: rgba(98, 114, 164, 0.5);
+    --page-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    --page-bg: #282a36;
+
+    --app-bg: #21222c;
+    --app-bg-glow-1: rgba(189, 147, 249, 0.1); /* Purple Glow */
+    --app-bg-glow-2: rgba(255, 121, 198, 0.05); /* Pink Glow */
+    --quote-bg: rgba(98, 114, 164, 0.1);
+    --code-bg: #21222c;
+    --table-th-bg: #44475a;
+    --table-tr-bg: rgba(255, 255, 255, 0.02);
+    --toolbar-gradient: linear-gradient(90deg, #21222c 0%, #282a36 50%, #21222c 100%);
+    --dropdown-bg: #44475a;
+
+    --pdf-toggle-bg: rgba(189, 147, 249, 0.1);
+    --pdf-toggle-hover: rgba(189, 147, 249, 0.2);
+    --export-pill-color: #bd93f9;
+    --export-pill-border: rgba(189, 147, 249, 0.5);
+    --export-pill-hover-bg: rgba(189, 147, 249, 0.2);
+    --export-pill-hover-border: #bd93f9;
+
+    --alt-btn-bg: rgba(98, 114, 164, 0.1);
+    --alt-btn-border: rgba(98, 114, 164, 0.3);
+    --alt-btn-color: #f8f8f2;
+    --alt-btn-hover-bg: rgba(98, 114, 164, 0.2);
+    --alt-btn-hover-border: #ff79c6;
+    --alt-btn-hover-color: #ff79c6;
+
+    --sidebar-bg: #21222c;
+    --toc-item-color: #8be9fd;
+    --toc-item-hover-bg: rgba(98, 114, 164, 0.2);
+    --toc-item-active-bg: rgba(189, 147, 249, 0.2);
+
+    /* Syntax Highlighting - Dracula */
+    --syntax-keyword: #ff79c6; /* Pink */
+    --syntax-string: #50fa7b; /* Green */
+    --syntax-comment: #6272a4; /* Muted */
+    --syntax-function: #50fa7b; /* Green */
+    --syntax-variable: #f8f8f2; /* White */
+    --syntax-constant: #bd93f9; /* Purple */
+    --syntax-class: #8be9fd; /* Cyan */
+}
+
 * {
     box-sizing: border-box;
 }

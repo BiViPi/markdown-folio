@@ -462,6 +462,7 @@ export class PreviewPanel {
                         <button class="toolbar-btn theme-btn" data-theme="ivory"><span class="tb-label">Ivory</span></button>
                         <button class="toolbar-btn theme-btn" data-theme="serene"><span class="tb-label">Serene</span></button>
                         <button class="toolbar-btn theme-btn" data-theme="cyberpunk"><span class="tb-label">Cyberpunk</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="dracula"><span class="tb-label">Dracula</span></button>
                     </div>
                 </div>
 
