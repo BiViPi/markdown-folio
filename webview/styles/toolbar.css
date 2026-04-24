@@ -19,6 +19,19 @@ body.light-mode #toolbar {
     background: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
 }
 
+#toolbar.collapsed {
+    padding: 4px;
+    border-radius: 50%;
+}
+
+#toolbar.collapsed > *:not(#toolbar-toggle) {
+    display: none;
+}
+
+#toolbar.collapsed .toolbar-sep {
+    display: none;
+}
+
 .toolbar-btn {
     display: inline-flex;
     align-items: center;
@@ -127,8 +140,8 @@ body.light-mode #toolbar {
 }
 
 #theme-dropdown {
-    right: calc(50% - 385px);
-    min-width: 100px;
+    right: calc(50% - 415px);
+    min-width: 110px;
     padding: 6px;
 }
 

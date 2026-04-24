@@ -6,6 +6,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] — 2026-04-24
+
+### Added
+- **Theme Expansion:** Added 4 new premium themes (Admiral, Cyberpunk, Dracula, GitHub), bringing the total to 6 unique styles.
+- **Dynamic Theme Label:** The toolbar now displays the name of the currently active theme for better visibility.
+
 ## [1.1.0] — 2026-04-06
 
 ### Added

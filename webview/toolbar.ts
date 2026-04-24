@@ -63,7 +63,6 @@ export class Toolbar {
         this._initPaperOptions();
         this._initSettingsChips();
         this._initZoomControls();
-        this._initToolbarCollapse();
 
         document.addEventListener('click', () => {
             this._closeAllDropdowns();
@@ -73,35 +72,6 @@ export class Toolbar {
             if (event.key === 'Escape') {
                 this._closeAllDropdowns();
             }
-        });
-    }
-
-    private _initToolbarCollapse() {
-        const toggleBtn = document.getElementById('toolbar-toggle');
-
-        // Restore state
-        if (localStorage.getItem('folio-toolbar-collapsed') === 'true') {
-            document.body.classList.add('toolbar-collapsed');
-            if (toggleBtn) {
-                toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-                toggleBtn.setAttribute('title', 'Expand Toolbar');
-            }
-        }
-
-        toggleBtn?.addEventListener('click', () => {
-            const isCollapsed = document.body.classList.toggle('toolbar-collapsed');
-            localStorage.setItem('folio-toolbar-collapsed', isCollapsed ? 'true' : 'false');
-
-            if (isCollapsed) {
-                toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-                toggleBtn.setAttribute('title', 'Expand Toolbar');
-            } else {
-                toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-                toggleBtn.setAttribute('title', 'Collapse Toolbar');
-            }
-
-            // Re-sync toolbar position to handle size change width/height
-            window.dispatchEvent(new Event('resize'));
         });
     }
 
@@ -277,6 +247,7 @@ export class Toolbar {
         fontSize?: number;
         headingSize?: 'S' | 'M' | 'L';
         showTocSidebar?: boolean;
+        theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
         bodyFont?: string;
     }) {
         // Sync font chips
@@ -309,12 +280,22 @@ export class Toolbar {
                 chip.classList.toggle('active', chip.textContent?.trim() === settings.headingSize);
             });
         }
-
+        
         // Sync TOC sidebar toggle
         if (settings.showTocSidebar !== undefined) {
             const toggle = document.querySelector<HTMLElement>('.set-toggle[data-action="toc-sidebar"]');
             if (toggle) {
                 toggle.classList.toggle('on', settings.showTocSidebar);
+            }
+        }
+
+        // Sync theme label
+        if (settings.theme !== undefined) {
+            const themeLabel = document.getElementById('theme-label');
+            if (themeLabel) {
+                // Capitalize first letter for display
+                const displayName = settings.theme.charAt(0).toUpperCase() + settings.theme.slice(1);
+                themeLabel.textContent = displayName;
             }
         }
     }

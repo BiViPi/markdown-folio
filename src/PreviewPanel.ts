@@ -38,7 +38,6 @@ export class PreviewPanel {
     ): PreviewPanel {
         panel.webview.options = {
             enableScripts: true,
-            retainContextWhenHidden: true,
             localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')]
         };
         return new PreviewPanel(panel, context.extensionUri, document);
@@ -434,16 +433,12 @@ export class PreviewPanel {
                     </div>
                     <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="theme-dropdown-toggle" title="Preview Theme">
-                        <span class="tb-label">Theme</span>
+                        <span class="tb-label" id="theme-label">Theme</span>
                         <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <div class="toolbar-sep"></div>
-                    <button class="toolbar-btn" id="toolbar-toggle" title="Toggle Toolbar">
-                        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <div class="toolbar-sep"></div>
                     <button class="toolbar-btn" id="toolbar-toggle" title="Collapse Toolbar">
-                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
 
