@@ -99,6 +99,7 @@ function applySettings(settings: {
     headingSize?: 'S' | 'M' | 'L';
     lineSpacing?: string;
     pageWidth?: string;
+    showToolbar?: boolean;
     showTocSidebar?: boolean;
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
 }) {
@@ -119,6 +120,16 @@ function applySettings(settings: {
         if (paper) {
             paper.className = paper.className.replace(/width-\w+/g, '').trim();
             paper.classList.add(`width-${settings.pageWidth}`);
+        }
+    }
+    if (settings.showToolbar !== undefined) {
+        const tb = document.getElementById('toolbar');
+        const container = document.getElementById('document-container');
+        if (tb) {
+            tb.style.display = settings.showToolbar ? '' : 'none';
+        }
+        if (container) {
+            container.style.paddingTop = settings.showToolbar ? '' : '32px';
         }
     }
     if (settings.showTocSidebar !== undefined) {

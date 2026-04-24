@@ -2,7 +2,7 @@
   "name": "markdown-folio",
   "displayName": "Markdown Folio",
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX math, Mermaid diagrams, and custom typography.",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "icon": "images/icon.png",
   "publisher": "BiViPi",
   "engines": {
@@ -153,6 +153,11 @@
             "wide"
           ],
           "description": "Width of the virtual A4 page."
+        },
+        "markdownFolio.showToolbar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the toolbar in the preview panel."
         },
         "markdownFolio.showTocSidebar": {
           "type": "boolean",

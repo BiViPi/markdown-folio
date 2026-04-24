@@ -441,6 +441,10 @@ export class PreviewPanel {
                     <button class="toolbar-btn" id="toolbar-toggle" title="Toggle Toolbar">
                         <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
+                    <div class="toolbar-sep"></div>
+                    <button class="toolbar-btn" id="toolbar-toggle" title="Collapse Toolbar">
+                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
                 </div>
 
                 <div id="png-dropdown" class="dropdown-menu">

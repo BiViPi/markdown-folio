@@ -13,20 +13,10 @@
     backdrop-filter: blur(20px);
     background: var(--toolbar-gradient);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-    transition: width 0.3s ease, padding 0.3s ease;
 }
 
-#toolbar.collapsed {
-    padding: 4px;
-    border-radius: 50%;
-}
-
-#toolbar.collapsed > *:not(#toolbar-toggle) {
-    display: none;
-}
-
-#toolbar.collapsed .toolbar-sep {
-    display: none;
+body.light-mode #toolbar {
+    background: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
 }
 
 .toolbar-btn {
