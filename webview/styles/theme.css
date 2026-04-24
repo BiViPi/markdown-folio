@@ -22,7 +22,7 @@ body.obsidian-mode {
     --toolbar-border: rgba(200, 169, 94, 0.28);
     --page-shadow: 0 20px 42px rgba(0, 0, 0, 0.55);
     --page-bg: linear-gradient(168deg, #152847 0%, #1a2f4a 26%, #1e2638 56%, #1f2218 78%, #211d10 100%);
-    
+
     --app-bg: linear-gradient(175deg, #111e35 0%, #141e2e 40%, #181c18 70%, #1a1710 100%);
     --app-bg-glow-1: rgba(30, 80, 160, 0.25);
     --app-bg-glow-2: rgba(160, 100, 10, 0.15);
@@ -32,14 +32,14 @@ body.obsidian-mode {
     --table-tr-bg: rgba(255, 255, 255, 0.02);
     --toolbar-gradient: linear-gradient(90deg, #0a1640 0%, #101f4d 32%, #1a1b2d 62%, #302207 100%);
     --dropdown-bg: linear-gradient(160deg, #0d1d48 0%, #131520 55%, #1e1800 100%);
-    
+
     --pdf-toggle-bg: rgba(200, 169, 94, 0.08);
     --pdf-toggle-hover: rgba(200, 169, 94, 0.2);
     --export-pill-color: var(--gold-color);
     --export-pill-border: color-mix(in oklab, var(--gold-color) 45%, transparent);
     --export-pill-hover-bg: rgba(200, 169, 94, 0.14);
     --export-pill-hover-border: var(--gold-color);
-    
+
     --alt-btn-bg: rgba(255, 255, 255, 0.04);
     --alt-btn-border: rgba(255, 255, 255, 0.12);
     --alt-btn-color: var(--text-muted);
@@ -54,7 +54,8 @@ body.obsidian-mode {
 
     /* Syntax Highlighting - Obsidian */
     --syntax-keyword: #818cf8;
-    --syntax-string: #fcd34d;  /* Gold String for dark background */
+    --syntax-string: #fcd34d;
+    /* Gold String for dark background */
     --syntax-comment: #64748b;
     --syntax-function: #a855f7;
     --syntax-variable: #94a3b8;
@@ -86,14 +87,14 @@ body.ivory-mode {
     --table-tr-bg: rgba(0, 0, 0, 0.02);
     --toolbar-gradient: linear-gradient(90deg, #f1f5ff 0%, #eaf0ff 45%, #f4ead3 100%);
     --dropdown-bg: linear-gradient(160deg, #dde3f8 0%, #ede8d8 60%, #f5edd0 100%);
-    
+
     --pdf-toggle-bg: rgba(139, 101, 16, 0.07);
     --pdf-toggle-hover: rgba(139, 101, 16, 0.14);
     --export-pill-color: #8b6510;
     --export-pill-border: rgba(139, 101, 16, 0.35);
     --export-pill-hover-bg: rgba(139, 101, 16, 0.08);
     --export-pill-hover-border: rgba(139, 101, 16, 0.6);
-    
+
     --alt-btn-bg: rgba(0, 0, 0, 0.04);
     --alt-btn-border: rgba(0, 0, 0, 0.15);
     --alt-btn-color: var(--text-muted);
@@ -107,13 +108,14 @@ body.ivory-mode {
     --toc-item-active-bg: rgba(139, 101, 16, 0.08);
 
     /* Syntax Highlighting - Ivory (Theme 1) */
-    --syntax-keyword: #7c3aed;
-    --syntax-string: #059669;  /* Deep Green for light background */
+    --syntax-keyword: #a37acc;
+    --syntax-string: #059669;
+    /* Deep Green for light background */
     --syntax-comment: #94a3b8;
-    --syntax-function: #2563eb;
-    --syntax-variable: #4b5563;
+    --syntax-function: #3d85c6;
+    --syntax-variable: #5c6370;
     --syntax-constant: #ea580c;
-    --syntax-class: #0891b2;
+    --syntax-class: #b57614;
 }
 
 body.sepia-mode {
@@ -130,7 +132,7 @@ body.sepia-mode {
     --toolbar-border: rgba(139, 101, 16, 0.3);
     --page-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
     --page-bg: linear-gradient(168deg, #fdf6e3 0%, #f5ebd0 40%, #eee0c0 100%);
-    
+
     --app-bg: linear-gradient(180deg, #eaddc5 0%, #e2d1b4 100%);
     --app-bg-glow-1: rgba(180, 140, 80, 0.15);
     --app-bg-glow-2: rgba(139, 101, 16, 0.1);
@@ -140,14 +142,14 @@ body.sepia-mode {
     --table-tr-bg: rgba(139, 101, 16, 0.03);
     --toolbar-gradient: linear-gradient(90deg, #f0e6d2 0%, #e8dbc3 45%, #e1d1b5 100%);
     --dropdown-bg: linear-gradient(160deg, #f4ecd8 0%, #eaddc5 60%, #e2d1b4 100%);
-    
+
     --pdf-toggle-bg: rgba(139, 101, 16, 0.08);
     --pdf-toggle-hover: rgba(139, 101, 16, 0.15);
     --export-pill-color: #b45309;
     --export-pill-border: rgba(139, 101, 16, 0.35);
     --export-pill-hover-bg: rgba(139, 101, 16, 0.1);
     --export-pill-hover-border: rgba(139, 101, 16, 0.6);
-    
+
     --alt-btn-bg: rgba(139, 101, 16, 0.05);
     --alt-btn-border: rgba(139, 101, 16, 0.15);
     --alt-btn-color: var(--text-muted);
@@ -162,7 +164,8 @@ body.sepia-mode {
 
     /* Syntax Highlighting - Sepia */
     --syntax-keyword: #991b1b;
-    --syntax-string: #166534;  /* Forest Green for sepia background */
+    --syntax-string: #166534;
+    /* Forest Green for sepia background */
     --syntax-comment: #7d6852;
     --syntax-function: #854d0e;
     --syntax-variable: #433422;
@@ -184,7 +187,7 @@ body.midnight-mode {
     --toolbar-border: rgba(56, 189, 248, 0.3);
     --page-shadow: 0 20px 42px rgba(0, 0, 0, 0.6);
     --page-bg: #1e293b;
-    
+
     --app-bg: #0f172a;
     --app-bg-glow-1: rgba(56, 189, 248, 0.1);
     --app-bg-glow-2: rgba(0, 0, 0, 0);
@@ -194,7 +197,7 @@ body.midnight-mode {
     --table-tr-bg: rgba(255, 255, 255, 0.02);
     --toolbar-gradient: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
     --dropdown-bg: #1e293b;
-    
+
     --pdf-toggle-bg: rgba(56, 189, 248, 0.1);
     --pdf-toggle-hover: rgba(56, 189, 248, 0.2);
     --export-pill-color: #38bdf8;
@@ -202,13 +205,14 @@ body.midnight-mode {
     --alt-btn-bg: rgba(255, 255, 255, 0.05);
     --alt-btn-border: rgba(255, 255, 255, 0.1);
     --alt-btn-color: #94a3b8;
-    
+
     --sidebar-bg: #0f172a;
     --toc-item-color: #cbd5e1;
 
     /* Syntax Highlighting - Midnight */
     --syntax-keyword: #38bdf8;
-    --syntax-string: #fcd34d;  /* Gold String for midnight background */
+    --syntax-string: #fcd34d;
+    /* Gold String for midnight background */
     --syntax-comment: #475569;
     --syntax-function: #f0abfc;
     --syntax-variable: #94a3b8;
@@ -235,6 +239,18 @@ body {
 }
 
 /* Syntax Highlighting Base Styles */
+.hljs {
+    color: var(--text-primary);
+}
+
+#document-content code.hljs:not([class*="language-"]) {
+    color: var(--gold-color);
+}
+
+#document-content code.hljs:not([class*="language-"]) .hljs-string {
+    color: var(--gold-color);
+}
+
 pre code.hljs {
     display: block;
     overflow-x: auto;
@@ -246,12 +262,72 @@ pre code.hljs {
     line-height: 1.5;
 }
 
-.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link { color: var(--syntax-keyword); font-weight: 500; }
-.hljs-string, .hljs-doctag, .hljs-regexp, .hljs-attr { color: var(--syntax-string); }
-.hljs-title, .hljs-name, .hljs-selector-id, .hljs-selector-class { color: var(--syntax-function); }
-.hljs-variable, .hljs-template-variable { color: var(--syntax-variable); }
-.hljs-comment, .hljs-quote, .hljs-deletion { color: var(--syntax-comment); font-style: italic; }
-.hljs-keyword, .hljs-selector-tag, .hljs-bullet, .hljs-subst, .hljs-meta, .hljs-symbol, .hljs-attribute { color: var(--syntax-keyword); }
-.hljs-type, .hljs-built_in, .hljs-number, .hljs-params, .hljs-addition { color: var(--syntax-constant); }
-.hljs-emphasis { font-style: italic; }
-.hljs-strong { font-weight: bold; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+    color: var(--syntax-keyword);
+    font-weight: 500;
+}
+
+.hljs-string,
+.hljs-doctag,
+.hljs-regexp {
+    color: var(--syntax-string);
+}
+
+.hljs-title,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+    color: var(--syntax-function);
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-params {
+    color: var(--syntax-variable);
+}
+
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+    color: var(--syntax-comment);
+    font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-bullet,
+.hljs-subst,
+.hljs-meta,
+.hljs-symbol,
+.hljs-attribute {
+    color: var(--syntax-keyword);
+}
+
+.hljs-type,
+.hljs-built_in,
+.hljs-number,
+.hljs-addition {
+    color: var(--syntax-constant);
+}
+
+.hljs-attr,
+.hljs-property {
+    color: var(--syntax-class);
+}
+
+.hljs-punctuation,
+.hljs-operator {
+    color: var(--syntax-variable);
+}
+
+.hljs-emphasis {
+    font-style: italic;
+}
+
+.hljs-strong {
+    font-weight: bold;
+}

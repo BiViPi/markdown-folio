@@ -14,15 +14,22 @@ export class MarkdownEngine {
             linkify: true,
             typographer: false,
             highlight: (str, lang) => {
-                if (lang && hljs.getLanguage(lang)) {
+                const language = lang?.trim();
+
+                if (language && hljs.getLanguage(language)) {
                     try {
-                        return '<pre><code class="hljs language-' + lang + '">' +
-                            hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-                            '</code></pre>';
+                        return this.wrapHighlightedCode(
+                            this.highlightMemberRoots(hljs.highlight(str, { language, ignoreIllegals: true }).value),
+                            language
+                        );
                     } catch (__) { }
                 }
 
-                return '<pre><code class="hljs">' + this.md.utils.escapeHtml(str) + '</code></pre>';
+                if (!language) {
+                    return this.wrapHighlightedCode(this.highlightQuotedStrings(str));
+                }
+
+                return '';
             }
         })
             .use(markdownItAnchor, {
@@ -31,10 +38,39 @@ export class MarkdownEngine {
             })
             .use(markdownItToc, { containerClass: 'auto-toc', listType: 'ul' })
             .use(markdownItKatex);
+
+        this.md.renderer.rules.code_inline = (tokens, idx) => {
+            return `<code class="hljs code-inline">${this.highlightQuotedStrings(tokens[idx].content)}</code>`;
+        };
     }
 
     public render(markdown: string): string {
         // NFC normalize to fix Vietnamese combining diacritics display
         return this.md.render(markdown.normalize('NFC'));
+    }
+
+    private wrapHighlightedCode(value: string, language?: string): string {
+        const languageClass = language ? ` language-${this.md.utils.escapeHtml(language)}` : '';
+        return `<pre><code class="hljs${languageClass}">${value}</code></pre>`;
+    }
+
+    private highlightQuotedStrings(value: string): string {
+        const pattern = /'([^'\\]*(?:\\.[^'\\]*)*)'/g;
+        let html = '';
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = pattern.exec(value)) !== null) {
+            html += this.md.utils.escapeHtml(value.slice(lastIndex, match.index));
+            html += `<span class="hljs-string">${this.md.utils.escapeHtml(match[0])}</span>`;
+            lastIndex = pattern.lastIndex;
+        }
+
+        html += this.md.utils.escapeHtml(value.slice(lastIndex));
+        return html;
+    }
+
+    private highlightMemberRoots(value: string): string {
+        return value.replace(/(^|[^\w$>&])([A-Za-z_$][\w$]*)(\.)/g, '$1<span class="hljs-variable">$2</span>$3');
     }
 }
