@@ -179,6 +179,8 @@
           "enum": [
             "dark",
             "light",
+            "sepia",
+            "midnight",
             "auto"
           ],
           "description": "Preview theme."

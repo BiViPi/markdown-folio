@@ -244,12 +244,7 @@ export class DocxExporter {
      * Falls back to text placeholder if Chrome is not available.
      */
     static async replaceMermaidWithImages(html: string, distDir: string): Promise<string> {
-        const blockRegex = /<pre[^>]*><code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code><\/pre>/g;
-        const sources: string[] = [];
-        let m: RegExpExecArray | null;
-        while ((m = blockRegex.exec(html)) !== null) {
-            sources.push(m[1]);
-        }
+        const sources = DocxExporter._extractMermaidSources(html);
         if (sources.length === 0) { return html; }
 
         let chromePath: string;
@@ -271,7 +266,8 @@ export class DocxExporter {
             for (const source of sources) {
                 const pageHtml = `<!DOCTYPE html><html><head><style>
                     body { margin: 0; padding: 8px; background: white; }
-                    .mermaid svg { max-width: 100%; }
+                    .mermaid { display: inline-block; }
+                    .mermaid svg { display: block; max-width: 100%; height: auto; }
                 </style></head><body>
                     <div class="mermaid">${source}</div>
                     <script src="file:///${mermaidJs}"><\/script>
@@ -292,12 +288,18 @@ export class DocxExporter {
                 await page.goto(`file:///${tmpFile.replace(/\\/g, '/')}`, { waitUntil: 'networkidle0' });
                 await page.waitForFunction('window._done === true', { timeout: 15000 });
 
-                const el = await page.$('.mermaid');
-                const bbox = el ? await el.boundingBox() : null;
+                const svgEl = await page.$('.mermaid svg');
+                const captureEl = svgEl ?? await page.$('.mermaid');
+                const bbox = captureEl ? await captureEl.boundingBox() : null;
                 if (bbox && bbox.width > 0 && bbox.height > 0) {
                     const buf = await page.screenshot({
                         type: 'png',
-                        clip: { x: bbox.x, y: bbox.y, width: bbox.width, height: Math.ceil(bbox.height) },
+                        clip: {
+                            x: Math.max(0, bbox.x),
+                            y: Math.max(0, bbox.y),
+                            width: Math.ceil(bbox.width),
+                            height: Math.ceil(bbox.height),
+                        },
                     });
                     images.push(`data:image/png;base64,${Buffer.from(buf).toString('base64')}`);
                 } else {
@@ -313,7 +315,7 @@ export class DocxExporter {
 
         let idx = 0;
         return html.replace(
-            /<pre[^>]*><code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code><\/pre>/g,
+            DocxExporter._mermaidBlockRegex(),
             (_match, content) => {
                 const imgSrc = images[idx++];
                 if (imgSrc) {
@@ -327,11 +329,25 @@ export class DocxExporter {
 
     private static _mermaidFallback(html: string): string {
         return html.replace(
-            /<pre[^>]*><code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code><\/pre>/g,
+            DocxExporter._mermaidBlockRegex(),
             (_match, content) => {
                 const firstLine = content.trim().split('\n')[0] || 'diagram';
                 return `<p><em>[Diagram: ${firstLine}]</em></p>`;
             }
         );
+    }
+
+    private static _mermaidBlockRegex(): RegExp {
+        return /(?:<pre[^>]*>\s*<code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>)|(?:<div[^>]*class="[^"]*\bmermaid\b[^"]*"[^>]*>([\s\S]*?)<\/div>)/g;
+    }
+
+    private static _extractMermaidSources(html: string): string[] {
+        const blockRegex = DocxExporter._mermaidBlockRegex();
+        const sources: string[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = blockRegex.exec(html)) !== null) {
+            sources.push((m[1] || m[2] || '').trim());
+        }
+        return sources;
     }
 }

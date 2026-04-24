@@ -10,35 +10,19 @@ export class Toolbar {
     }
 
     private _initEventListeners() {
-        const themeToggle = document.getElementById('theme-toggle');
-        themeToggle?.addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            const currentIsLight = document.body.classList.contains('light-mode');
-
-            // Swap icon: sun in light mode, moon in dark mode
-            const iconEl = themeToggle.querySelector('svg');
-            if (iconEl) {
-                iconEl.innerHTML = currentIsLight
-                    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
-                    : '<path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>';
-            }
-
-            this.vscode.postMessage({
-                type: 'update-settings',
-                payload: { theme: currentIsLight ? 'light' : 'dark' }
+        const themeButtons = document.querySelectorAll<HTMLElement>('.theme-btn');
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme as string;
+                this.vscode.postMessage({
+                    type: 'update-settings',
+                    payload: { theme }
+                });
+                this._closeAllDropdowns();
+                
+                // Note: The actual DOM class update and mermaid re-render 
+                // happens in main.ts when settings-updated is received.
             });
-
-            mermaid.initialize({
-                theme: currentIsLight ? 'default' : 'dark',
-                startOnLoad: false,
-                securityLevel: 'loose'
-            });
-
-            document.querySelectorAll('.language-mermaid').forEach(el => {
-                el.removeAttribute('data-processed');
-            });
-
-            mermaid.run({ querySelector: '.language-mermaid' });
         });
 
         const exportPdf = document.getElementById('export-pdf');
@@ -53,7 +37,7 @@ export class Toolbar {
         });
 
         document.getElementById('export-html')?.addEventListener('click', () => {
-            const isDarkMode = !document.body.classList.contains('light-mode');
+            const isDarkMode = !document.body.classList.contains('light-mode') && !document.body.classList.contains('sepia-mode');
             this.vscode.postMessage({ type: 'export-html', payload: { isDarkMode } });
         });
 
@@ -74,6 +58,7 @@ export class Toolbar {
         this._initDropdown('pdf-dropdown-toggle', 'pdf-dropdown');
         this._initDropdown('png-dropdown-toggle', 'png-dropdown');
         this._initDropdown('settings-dropdown-toggle', 'settings-dropdown');
+        this._initDropdown('theme-dropdown-toggle', 'theme-dropdown');
         this._initPaperOptions();
         this._initSettingsChips();
         this._initZoomControls();

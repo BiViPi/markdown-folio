@@ -429,9 +429,9 @@ export class PreviewPanel {
                         <button id="zoom-in" class="zoom-btn" title="Zoom in">+</button>
                     </div>
                     <div class="toolbar-sep"></div>
-                    <button class="toolbar-btn" id="theme-toggle" title="Toggle theme">
+                    <button class="toolbar-btn" id="theme-dropdown-toggle" title="Preview Theme">
                         <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
-                        <span class="tb-label">Theme</span>
+                        <span class="tb-label">Theme ▾</span>
                     </button>
                 </div>
 
@@ -445,6 +445,16 @@ export class PreviewPanel {
                             <span class="tb-label">Per Page</span>
                             <span class="export-pdf-badge" style="font-size:10px;opacity:0.6">A4 pages</span>
                         </button>
+                    </div>
+                </div>
+
+                <div id="theme-dropdown" class="dropdown-menu">
+                    <div class="popover-group">
+                        <button class="toolbar-btn theme-btn" data-theme="auto"><span class="tb-label">Auto</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="dark"><span class="tb-label">Dark</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="light"><span class="tb-label">Light</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="sepia"><span class="tb-label">Sepia</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="midnight"><span class="tb-label">Midnight</span></button>
                     </div>
                 </div>
 
