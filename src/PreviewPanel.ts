@@ -458,10 +458,10 @@ export class PreviewPanel {
 
                 <div id="theme-dropdown" class="dropdown-menu">
                     <div class="popover-group">
-                        <button class="toolbar-btn theme-btn" data-theme="obsidian"><span class="tb-label">Obsidian</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="admiral"><span class="tb-label">Admiral</span></button>
                         <button class="toolbar-btn theme-btn" data-theme="ivory"><span class="tb-label">Ivory</span></button>
-                        <button class="toolbar-btn theme-btn" data-theme="sepia"><span class="tb-label">Sepia</span></button>
-                        <button class="toolbar-btn theme-btn" data-theme="midnight"><span class="tb-label">Midnight</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="serene"><span class="tb-label">Serene</span></button>
+                        <button class="toolbar-btn theme-btn" data-theme="cyberpunk"><span class="tb-label">Cyberpunk</span></button>
                     </div>
                 </div>
 

@@ -177,9 +177,9 @@
           "type": "string",
           "default": "ivory",
           "enum": [
-            "obsidian",
+            "admiral",
             "ivory",
-            "sepia",
+            "serene",
             "midnight"
           ],
           "description": "Preview theme."

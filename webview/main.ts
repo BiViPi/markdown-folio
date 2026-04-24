@@ -100,7 +100,7 @@ function applySettings(settings: {
     lineSpacing?: string;
     pageWidth?: string;
     showTocSidebar?: boolean;
-    theme?: 'obsidian' | 'ivory' | 'sepia' | 'midnight';
+    theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk';
 }) {
     const root = document.documentElement;
     if (settings.headingFont) { root.style.setProperty('--font-heading', settings.headingFont); }
@@ -128,16 +128,16 @@ function applySettings(settings: {
         }
     }
     if (settings.theme !== undefined) {
-        document.body.classList.remove('ivory-mode', 'obsidian-mode', 'sepia-mode', 'midnight-mode');
+        document.body.classList.remove('ivory-mode', 'admiral-mode', 'serene-mode', 'cyberpunk-mode');
         
         if (settings.theme === 'ivory') {
             document.body.classList.add('ivory-mode');
-        } else if (settings.theme === 'obsidian') {
-            document.body.classList.add('obsidian-mode');
-        } else if (settings.theme === 'sepia') {
-            document.body.classList.add('sepia-mode');
-        } else if (settings.theme === 'midnight') {
-            document.body.classList.add('midnight-mode');
+        } else if (settings.theme === 'admiral') {
+            document.body.classList.add('admiral-mode');
+        } else if (settings.theme === 'serene') {
+            document.body.classList.add('serene-mode');
+        } else if (settings.theme === 'cyberpunk') {
+            document.body.classList.add('cyberpunk-mode');
         }
         
         // Update active state in theme dropdown

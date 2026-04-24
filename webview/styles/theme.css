@@ -8,7 +8,7 @@
     --heading-scale: 1;
 }
 
-body.obsidian-mode {
+body.admiral-mode {
     --bg-primary: #0b1120;
     --bg-secondary: #0f172a;
     --bg-surface: #111827;
@@ -52,7 +52,7 @@ body.obsidian-mode {
     --toc-item-hover-bg: rgba(255, 255, 255, 0.06);
     --toc-item-active-bg: rgba(200, 169, 94, 0.12);
 
-    /* Syntax Highlighting - Obsidian */
+    /* Syntax Highlighting - Admiral */
     --syntax-keyword: #818cf8;
     --syntax-string: #fcd34d;
     /* Gold String for dark background */
@@ -118,106 +118,113 @@ body.ivory-mode {
     --syntax-class: #b57614;
 }
 
-body.sepia-mode {
-    --bg-primary: #f4ecd8;
-    --bg-secondary: #faf6eb;
-    --bg-surface: #fdfaf3;
-    --bg-surface-2: #e9e0c9;
-    --border-color: rgba(139, 101, 16, 0.2);
-    --text-primary: #433422;
-    --text-muted: #7d6852;
-    --accent-color: #d97706;
-    --gold-color: #b45309;
-    --toolbar-bg: rgba(250, 246, 235, 0.88);
-    --toolbar-border: rgba(139, 101, 16, 0.3);
-    --page-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
-    --page-bg: linear-gradient(168deg, #fdf6e3 0%, #f5ebd0 40%, #eee0c0 100%);
+body.serene-mode {
+    --bg-primary: #c8e4f5;
+    --bg-secondary: #daeefb;
+    --bg-surface: #ffffff;
+    --bg-surface-2: #eaf5fc;
+    --border-color: rgba(0, 0, 0, 0.55);
+    --text-primary: #111827;
+    --text-muted: #3b5a7a;
+    --accent-color: #1a6eb5;
+    --gold-color: #1a6eb5;
+    --table-th-color: #ffffff;
+    --toolbar-bg: rgba(200, 228, 245, 0.92);
+    --toolbar-border: rgba(26, 110, 181, 0.28);
+    --page-shadow: 0 12px 36px rgba(30, 80, 140, 0.14);
+    --page-bg: #ffffff;
 
-    --app-bg: linear-gradient(180deg, #eaddc5 0%, #e2d1b4 100%);
-    --app-bg-glow-1: rgba(180, 140, 80, 0.15);
-    --app-bg-glow-2: rgba(139, 101, 16, 0.1);
-    --quote-bg: rgba(139, 101, 16, 0.06);
-    --code-bg: rgba(139, 101, 16, 0.05);
-    --table-th-bg: rgba(139, 101, 16, 0.08);
-    --table-tr-bg: rgba(139, 101, 16, 0.03);
-    --toolbar-gradient: linear-gradient(90deg, #f0e6d2 0%, #e8dbc3 45%, #e1d1b5 100%);
-    --dropdown-bg: linear-gradient(160deg, #f4ecd8 0%, #eaddc5 60%, #e2d1b4 100%);
+    --app-bg: linear-gradient(180deg, #b8d8f0 0%, #c8e4f5 50%, #d4ecf8 100%);
+    --app-bg-glow-1: rgba(26, 110, 181, 0.12);
+    --app-bg-glow-2: rgba(0, 0, 0, 0);
+    --quote-bg: rgba(26, 110, 181, 0.06);
+    --code-bg: #f0f8ff;
+    --table-th-bg: #1a5fa0;
+    --table-tr-bg: #ffffff;
+    --toolbar-gradient: linear-gradient(90deg, #b8d8f0 0%, #c8e4f5 50%, #b8d8f0 100%);
+    --dropdown-bg: #daeefb;
 
-    --pdf-toggle-bg: rgba(139, 101, 16, 0.08);
-    --pdf-toggle-hover: rgba(139, 101, 16, 0.15);
-    --export-pill-color: #b45309;
-    --export-pill-border: rgba(139, 101, 16, 0.35);
-    --export-pill-hover-bg: rgba(139, 101, 16, 0.1);
-    --export-pill-hover-border: rgba(139, 101, 16, 0.6);
+    --pdf-toggle-bg: rgba(26, 110, 181, 0.08);
+    --pdf-toggle-hover: rgba(26, 110, 181, 0.16);
+    --export-pill-color: #1a5fa0;
+    --export-pill-border: rgba(26, 110, 181, 0.35);
+    --export-pill-hover-bg: rgba(26, 110, 181, 0.10);
+    --export-pill-hover-border: #1a6eb5;
 
-    --alt-btn-bg: rgba(139, 101, 16, 0.05);
-    --alt-btn-border: rgba(139, 101, 16, 0.15);
-    --alt-btn-color: var(--text-muted);
-    --alt-btn-hover-bg: rgba(139, 101, 16, 0.1);
-    --alt-btn-hover-border: rgba(139, 101, 16, 0.3);
-    --alt-btn-hover-color: #b45309;
+    --alt-btn-bg: rgba(26, 110, 181, 0.06);
+    --alt-btn-border: rgba(26, 110, 181, 0.20);
+    --alt-btn-color: #1e4f78;
+    --alt-btn-hover-bg: rgba(26, 110, 181, 0.14);
+    --alt-btn-hover-border: #1a6eb5;
+    --alt-btn-hover-color: #1a5fa0;
 
-    --sidebar-bg: linear-gradient(180deg, #eaddc5 0%, #e2d1b4 55%, #e8dbc3 100%);
-    --toc-item-color: var(--text-primary);
-    --toc-item-hover-bg: rgba(139, 101, 16, 0.05);
-    --toc-item-active-bg: rgba(139, 101, 16, 0.1);
+    --sidebar-bg: linear-gradient(180deg, #b0d4ee 0%, #c0dfF2 100%);
+    --toc-item-color: #0f2a45;
+    --toc-item-hover-bg: rgba(26, 110, 181, 0.10);
+    --toc-item-active-bg: rgba(26, 110, 181, 0.18);
 
-    /* Syntax Highlighting - Sepia */
-    --syntax-keyword: #991b1b;
-    --syntax-string: #166534;
-    /* Forest Green for sepia background */
-    --syntax-comment: #7d6852;
-    --syntax-function: #854d0e;
-    --syntax-variable: #433422;
-    --syntax-constant: #c2410c;
-    --syntax-class: #0369a1;
+    /* Syntax Highlighting - Serene/Stitch */
+    --syntax-keyword: #0050b3;
+    --syntax-string: #0a6640;
+    --syntax-comment: #5a7a96;
+    --syntax-function: #6d1a9c;
+    --syntax-variable: #1e3a55;
+    --syntax-constant: #b83200;
+    --syntax-class: #a05a00;
 }
 
-body.midnight-mode {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-surface: #1e293b;
-    --bg-surface-2: #334155;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --accent-color: #38bdf8;
-    --gold-color: #38bdf8;
-    --toolbar-bg: rgba(15, 23, 42, 0.9);
-    --toolbar-border: rgba(56, 189, 248, 0.3);
-    --page-shadow: 0 20px 42px rgba(0, 0, 0, 0.6);
-    --page-bg: #1e293b;
+body.cyberpunk-mode {
+    --bg-primary: #050505;
+    --bg-secondary: #0a0a0a;
+    --bg-surface: #0a0a0a;
+    --bg-surface-2: #141414;
+    --border-color: rgba(0, 240, 255, 0.5);
+    --text-primary: #e0e0e0;
+    --text-muted: #888888;
+    --accent-color: #00f0ff;
+    --gold-color: #ff2a9d; /* Brighter Neon Pink */
+    --toolbar-bg: linear-gradient(180deg, rgba(30, 30, 35, 0.95) 0%, rgba(5, 5, 10, 0.95) 100%);
+    --toolbar-border: rgba(0, 240, 255, 0.5);
+    --page-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    --page-bg: #0a0a0a;
 
-    --app-bg: #0f172a;
-    --app-bg-glow-1: rgba(56, 189, 248, 0.1);
-    --app-bg-glow-2: rgba(0, 0, 0, 0);
-    --quote-bg: rgba(56, 189, 248, 0.05);
-    --code-bg: rgba(0, 0, 0, 0.3);
-    --table-th-bg: rgba(30, 41, 59, 1);
+    --app-bg: #050505;
+    --app-bg-glow-1: rgba(0, 240, 255, 0.15);
+    --app-bg-glow-2: rgba(255, 42, 157, 0.05); /* Brighter Neon Pink Glow */
+    --quote-bg: rgba(0, 240, 255, 0.1);
+    --code-bg: rgba(0, 240, 255, 0.05);
+    --table-th-bg: #0a0a0a;
     --table-tr-bg: rgba(255, 255, 255, 0.02);
-    --toolbar-gradient: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    --dropdown-bg: #1e293b;
+    --toolbar-gradient: linear-gradient(90deg, #050505 0%, #0a0a0a 50%, #050505 100%);
+    --dropdown-bg: #0a0a0a;
 
-    --pdf-toggle-bg: rgba(56, 189, 248, 0.1);
-    --pdf-toggle-hover: rgba(56, 189, 248, 0.2);
-    --export-pill-color: #38bdf8;
-    --export-pill-border: rgba(56, 189, 248, 0.4);
-    --alt-btn-bg: rgba(255, 255, 255, 0.05);
-    --alt-btn-border: rgba(255, 255, 255, 0.1);
-    --alt-btn-color: #94a3b8;
+    --pdf-toggle-bg: rgba(255, 42, 157, 0.1);
+    --pdf-toggle-hover: rgba(255, 42, 157, 0.2);
+    --export-pill-color: #00f0ff;
+    --export-pill-border: rgba(0, 240, 255, 0.5);
+    --export-pill-hover-bg: rgba(0, 240, 255, 0.2);
+    --export-pill-hover-border: #00f0ff;
 
-    --sidebar-bg: #0f172a;
-    --toc-item-color: #cbd5e1;
+    --alt-btn-bg: rgba(255, 42, 157, 0.05);
+    --alt-btn-border: rgba(255, 42, 157, 0.4);
+    --alt-btn-color: #ff2a9d;
+    --alt-btn-hover-bg: rgba(255, 42, 157, 0.15);
+    --alt-btn-hover-border: #ff2a9d;
+    --alt-btn-hover-color: #ffffff;
 
-    /* Syntax Highlighting - Midnight */
-    --syntax-keyword: #38bdf8;
-    --syntax-string: #fcd34d;
-    /* Gold String for midnight background */
-    --syntax-comment: #475569;
-    --syntax-function: #f0abfc;
-    --syntax-variable: #94a3b8;
-    --syntax-constant: #fbbf24;
-    --syntax-class: #22d3ee;
+    --sidebar-bg: #050505;
+    --toc-item-color: #00f0ff;
+    --toc-item-hover-bg: rgba(0, 240, 255, 0.1);
+    --toc-item-active-bg: rgba(255, 42, 157, 0.2);
+
+    /* Syntax Highlighting - Cyberpunk */
+    --syntax-keyword: #ff2a9d; /* Bright Pink */
+    --syntax-string: #fdfa66; /* Neon Yellow */
+    --syntax-comment: #6b7280; /* Muted Grey */
+    --syntax-function: #00f0ff; /* Cyan */
+    --syntax-variable: #e2e8f0; /* Light Grey */
+    --syntax-constant: #ff8b39; /* Neon Orange */
+    --syntax-class: #39ff14; /* Neon Green */
 }
 
 * {

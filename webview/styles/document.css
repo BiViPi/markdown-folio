@@ -147,7 +147,7 @@
 #document-content th {
     background: var(--table-th-bg);
     font-weight: 600;
-    color: var(--gold-color);
+    color: var(--table-th-color, var(--gold-color));
 }
 
 #document-content tr:nth-child(even) {
