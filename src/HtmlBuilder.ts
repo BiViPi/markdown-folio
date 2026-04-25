@@ -8,6 +8,7 @@ export interface PdfSettings {
     fontSize?: number;
     headingSize?: 'S' | 'M' | 'L';
     lineSpacing?: string;
+    theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
 }
 
 export class HtmlBuilder {
@@ -19,11 +20,10 @@ export class HtmlBuilder {
     static buildPdfHtml(params: {
         html: string;
         distDir: string;
-        bodyClass?: string;
         settings?: PdfSettings;
         title?: string;
     }): string {
-        const { html, distDir, bodyClass = '', settings, title } = params;
+        const { html, distDir, settings, title } = params;
 
         // Đọc PDF stylesheet (mirrors preview light-mode visual)
         const pdfCssPath = path.join(distDir, 'document.pdf.css');
@@ -37,6 +37,14 @@ export class HtmlBuilder {
             ? fs.readFileSync(katexCssPath, 'utf-8')
             : '';
 
+        const themeCssPath = path.join(distDir, 'theme.css');
+        const themeCss = fs.existsSync(themeCssPath)
+            ? fs.readFileSync(themeCssPath, 'utf-8')
+            : '';
+
+        const themeClass = HtmlBuilder._themeClass(settings?.theme);
+        const themeOverrides = HtmlBuilder._buildPdfThemeOverrides(themeCss, settings?.theme);
+
         // Inject settings overrides
         const settingsOverrides = HtmlBuilder._buildSettingsOverrides(settings, true);
 
@@ -44,17 +52,18 @@ export class HtmlBuilder {
         const baseHref = distDir.replace(/\\/g, '/');
 
         return `<!DOCTYPE html>
-<html lang="en" class="${bodyClass}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title ? title.replace(/</g, '&lt;') : 'Document'}</title>
     <base href="file:///${baseHref}/">
     <style>${pdfCss}</style>
+    ${themeOverrides ? `<style>${themeOverrides}</style>` : ''}
     <style>${katexCss}</style>
     ${settingsOverrides ? `<style>${settingsOverrides}</style>` : ''}
 </head>
-<body>
+<body class="${themeClass}">
     <div id="document-content">${html}</div>
     <script src="mermaid.min.js"><\/script>
     <script>
@@ -68,7 +77,7 @@ export class HtmlBuilder {
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
             window._mermaidDone = false;
-            mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+                mermaid.initialize({ startOnLoad: false, theme: ${HtmlBuilder._isDarkTheme(settings?.theme) ? "'dark'" : "'default'"}, securityLevel: 'loose' });
             mermaid.run({ querySelector: '.mermaid' }).then(function() {
                 window._mermaidDone = true;
             }).catch(function() {
@@ -90,10 +99,9 @@ export class HtmlBuilder {
         distDir: string;
         settings?: PdfSettings;
         title?: string;
-        isDarkMode?: boolean;
         toc?: TocItem[];
     }): string {
-        const { html, distDir, settings, title, isDarkMode = false, toc = [] } = params;
+        const { html, distDir, settings, title, toc = [] } = params;
 
         // Đọc theme.css + document.css + sidebar.css (preview visual)
         const themeCss = fs.existsSync(path.join(distDir, 'theme.css'))
@@ -109,7 +117,7 @@ export class HtmlBuilder {
         katexCss = HtmlBuilder._inlineFontUrls(katexCss, distDir, /url\((fonts\/[^)]+)\)/g);
 
         const settingsOverrides = HtmlBuilder._buildSettingsOverrides(settings, false);
-        const bodyClass = isDarkMode ? '' : 'light-mode';
+        const bodyClass = HtmlBuilder._themeClass(settings?.theme);
         const sidebarHtml = HtmlBuilder._buildTocHtml(toc);
 
         return `<!DOCTYPE html>
@@ -146,7 +154,6 @@ export class HtmlBuilder {
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
         (function() {
-            var isDark = !document.body.classList.contains('light-mode');
             document.querySelectorAll('code.language-mermaid').forEach(function(el) {
                 var div = document.createElement('div');
                 div.className = 'mermaid';
@@ -154,11 +161,85 @@ export class HtmlBuilder {
                 var pre = el.closest('pre');
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
-            mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' });
+            mermaid.initialize({ startOnLoad: true, theme: ${HtmlBuilder._isDarkTheme(settings?.theme) ? "'dark'" : "'default'"}, securityLevel: 'loose' });
         })();
     </script>
 </body>
 </html>`;
+    }
+
+    private static _themeClass(theme?: PdfSettings['theme']): string {
+        return `${theme || 'ivory'}-mode`;
+    }
+
+    private static _isDarkTheme(theme?: PdfSettings['theme']): boolean {
+        return !['ivory', 'serene', 'github'].includes(theme || 'ivory');
+    }
+
+    private static _buildPdfThemeOverrides(themeCss: string, theme?: PdfSettings['theme']): string {
+        const themeName = theme || 'ivory';
+        const match = new RegExp(`body\\.${themeName}-mode\\s*\\{([\\s\\S]*?)\\n\\}`, 'm').exec(themeCss);
+        if (!match) { return ''; }
+
+        const vars = match[1]
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.startsWith('--'))
+            .join('\n');
+
+        return `
+body.${themeName}-mode {
+${vars}
+    color: var(--text-primary);
+    background: var(--page-bg);
+}
+body.${themeName}-mode #document-content {
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+body.${themeName}-mode h1,
+body.${themeName}-mode h2 {
+    color: var(--gold-color);
+}
+body.${themeName}-mode h1 {
+    border-bottom-color: color-mix(in oklab, var(--gold-color) 32%, transparent);
+}
+body.${themeName}-mode h3,
+body.${themeName}-mode h4,
+body.${themeName}-mode h5,
+body.${themeName}-mode h6 {
+    color: var(--text-primary);
+}
+body.${themeName}-mode a {
+    color: var(--accent-color);
+}
+body.${themeName}-mode blockquote {
+    border-left-color: color-mix(in oklab, var(--gold-color) 60%, transparent);
+    color: var(--text-muted);
+    background: var(--quote-bg);
+}
+body.${themeName}-mode pre {
+    background: var(--code-bg);
+    border-color: var(--border-color);
+}
+body.${themeName}-mode code {
+    background: var(--code-bg);
+    color: var(--gold-color);
+}
+body.${themeName}-mode th,
+body.${themeName}-mode td {
+    border-color: var(--border-color);
+}
+body.${themeName}-mode th {
+    background: var(--table-th-bg);
+    color: var(--table-th-color, var(--gold-color));
+}
+body.${themeName}-mode tr:nth-child(even) {
+    background: var(--table-tr-bg);
+}
+body.${themeName}-mode hr {
+    border-top-color: var(--border-color);
+}`;
     }
 
     private static _buildTocHtml(toc: TocItem[]): string {

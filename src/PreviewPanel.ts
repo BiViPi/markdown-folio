@@ -122,8 +122,7 @@ export class PreviewPanel {
                         return;
                     }
                     case 'export-html': {
-                        const { isDarkMode } = message.payload as { isDarkMode: boolean };
-                        this._handleExportHtml(isDarkMode);
+                        this._handleExportHtml();
                         return;
                     }
                     case 'export-png-full':
@@ -231,7 +230,7 @@ export class PreviewPanel {
         }
     }
 
-    private async _handleExportHtml(isDarkMode: boolean): Promise<void> {
+    private async _handleExportHtml(): Promise<void> {
         if (!this._guardContent()) { return; }
         try {
             const defaultName = path.basename(this._document.fileName, '.md') + '.html';
@@ -248,7 +247,6 @@ export class PreviewPanel {
                 distDir,
                 settings,
                 title: this._lastTitle,
-                isDarkMode,
                 toc: this._lastToc,
             });
 

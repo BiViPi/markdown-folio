@@ -37,8 +37,7 @@ export class Toolbar {
         });
 
         document.getElementById('export-html')?.addEventListener('click', () => {
-            const isDarkMode = !document.body.classList.contains('light-mode') && !document.body.classList.contains('sepia-mode');
-            this.vscode.postMessage({ type: 'export-html', payload: { isDarkMode } });
+            this.vscode.postMessage({ type: 'export-html', payload: {} });
         });
 
         document.getElementById('export-png-full')?.addEventListener('click', () => {
