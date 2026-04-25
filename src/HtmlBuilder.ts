@@ -102,7 +102,6 @@ export class HtmlBuilder {
 
         const themeCss = HtmlBuilder._readDistOrSourceCss(distDir, 'theme.css');
         const documentCss = HtmlBuilder._readDistOrSourceCss(distDir, 'document.css');
-        const toolbarCss = HtmlBuilder._readDistOrSourceCss(distDir, 'toolbar.css');
         const sidebarCss = HtmlBuilder._readDistOrSourceCss(distDir, 'sidebar.css');
 
         // Đọc KaTeX CSS và inline fonts base64
@@ -112,10 +111,8 @@ export class HtmlBuilder {
 
         const settingsOverrides = HtmlBuilder._buildSettingsOverrides(settings, false);
         const bodyClass = HtmlBuilder._themeClass(settings?.theme);
-        const toolbarHtml = settings?.showToolbar === false ? '' : HtmlBuilder._buildToolbarHtml();
         const sidebarHtml = settings?.showTocSidebar === false ? '' : HtmlBuilder._buildTocHtml(toc);
         const pageWidth = settings?.pageWidth || 'standard';
-        const topPadding = settings?.showToolbar === false ? '32px' : '84px';
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -128,18 +125,15 @@ export class HtmlBuilder {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Merriweather:wght@400;700&display=swap">
     <style>${themeCss}</style>
     <style>${documentCss}</style>
-    <style>${toolbarCss}</style>
     <style>${sidebarCss}</style>
     <style>${katexCss}</style>
     ${settingsOverrides ? `<style>${settingsOverrides}</style>` : ''}
     <style>
-        #document-container { padding-top: ${topPadding}; min-height: 100vh; }
+        #document-container { padding-top: 32px; min-height: 100vh; }
         #sidebar-toc a { color: inherit; text-decoration: none; display: block; }
-        .dropdown-menu { display: none !important; }
     </style>
 </head>
 <body class="${bodyClass}">
-    ${toolbarHtml}
     <div class="workspace-shell">
         ${sidebarHtml ? `<aside id="sidebar-toc">${sidebarHtml}</aside>` : ''}
         <main id="document-container">
@@ -159,16 +153,6 @@ export class HtmlBuilder {
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
             mermaid.initialize({ startOnLoad: true, theme: ${HtmlBuilder._isDarkTheme(settings?.theme) ? "'dark'" : "'default'"}, securityLevel: 'loose' });
-            function syncToolbarPosition() {
-                var container = document.getElementById('document-container');
-                var tb = document.getElementById('toolbar');
-                if (!container || !tb) { return; }
-                var rect = container.getBoundingClientRect();
-                tb.style.left = (rect.left + rect.width / 2) + 'px';
-                tb.style.transform = 'translateX(-50%)';
-            }
-            window.addEventListener('resize', syncToolbarPosition);
-            syncToolbarPosition();
         })();
     </script>
 </body>
@@ -211,8 +195,20 @@ export class HtmlBuilder {
         return `
 body.${themeName}-mode {
 ${vars}
-    color: var(--text-primary);
-    background: var(--page-bg);
+    color: #111827;
+    background: #ffffff;
+    --text-primary: #111827;
+    --text-muted: #4b5563;
+    --page-bg: #ffffff;
+    --app-bg: #ffffff;
+    --app-bg-glow-1: rgba(0, 0, 0, 0);
+    --app-bg-glow-2: rgba(0, 0, 0, 0);
+    --code-bg: rgba(0, 0, 0, 0.05);
+    --quote-bg: rgba(0, 0, 0, 0.04);
+    --table-th-bg: rgba(0, 0, 0, 0.06);
+    --table-tr-bg: rgba(0, 0, 0, 0.02);
+    --border-color: rgba(0, 0, 0, 0.14);
+    ${themeName === 'dracula' ? '--gold-color: #7c3aed;' : ''}
 }
 body.${themeName}-mode #document-content {
     color: var(--text-primary);
@@ -270,24 +266,6 @@ body.${themeName}-mode hr {
             return `<div class="toc-item level-${item.level}"><a href="#${item.slug}">${text}</a></div>`;
         }).join('\n');
         return `<div class="toc-header">Contents</div>\n${items}`;
-    }
-
-    private static _buildToolbarHtml(): string {
-        return `
-    <div id="toolbar">
-        <button class="export-pill export-pdf-toggle" title="Export PDF">Export PDF <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="export-pill" title="Export HTML">HTML</button>
-        <button class="export-pill export-pdf-toggle" title="Export PNG">PNG <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button class="export-pill" title="Export DOCX">DOCX</button>
-        <div class="toolbar-sep"></div>
-        <button class="toolbar-btn" title="Preview Settings"><span class="tb-label">Settings</span></button>
-        <div class="toolbar-sep"></div>
-        <div class="zoom-controls"><button class="zoom-btn">-</button><span id="zoom-label">100%</span><button class="zoom-btn">+</button></div>
-        <div class="toolbar-sep"></div>
-        <button class="toolbar-btn" title="Preview Theme"><span class="tb-label" id="theme-label">Theme</span><svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="toolbar-sep"></div>
-        <button class="toolbar-btn" title="Collapse Toolbar"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </div>`;
     }
 
     private static _inlineFontUrls(css: string, distDir: string, pattern: RegExp): string {
