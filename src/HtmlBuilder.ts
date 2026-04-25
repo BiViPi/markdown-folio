@@ -8,6 +8,9 @@ export interface PdfSettings {
     fontSize?: number;
     headingSize?: 'S' | 'M' | 'L';
     lineSpacing?: string;
+    pageWidth?: 'narrow' | 'standard' | 'wide';
+    showToolbar?: boolean;
+    showTocSidebar?: boolean;
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
 }
 
@@ -26,10 +29,7 @@ export class HtmlBuilder {
         const { html, distDir, settings, title } = params;
 
         // Đọc PDF stylesheet (mirrors preview light-mode visual)
-        const pdfCssPath = path.join(distDir, 'document.pdf.css');
-        const pdfCss = fs.existsSync(pdfCssPath)
-            ? fs.readFileSync(pdfCssPath, 'utf-8')
-            : '';
+        const pdfCss = HtmlBuilder._readDistOrSourceCss(distDir, 'document.pdf.css');
 
         // Đọc KaTeX CSS
         const katexCssPath = path.join(distDir, 'katex.css');
@@ -37,10 +37,7 @@ export class HtmlBuilder {
             ? fs.readFileSync(katexCssPath, 'utf-8')
             : '';
 
-        const themeCssPath = path.join(distDir, 'theme.css');
-        const themeCss = fs.existsSync(themeCssPath)
-            ? fs.readFileSync(themeCssPath, 'utf-8')
-            : '';
+        const themeCss = HtmlBuilder._readDistOrSourceCss(distDir, 'theme.css');
 
         const themeClass = HtmlBuilder._themeClass(settings?.theme);
         const themeOverrides = HtmlBuilder._buildPdfThemeOverrides(themeCss, settings?.theme);
@@ -103,13 +100,10 @@ export class HtmlBuilder {
     }): string {
         const { html, distDir, settings, title, toc = [] } = params;
 
-        // Đọc theme.css + document.css + sidebar.css (preview visual)
-        const themeCss = fs.existsSync(path.join(distDir, 'theme.css'))
-            ? fs.readFileSync(path.join(distDir, 'theme.css'), 'utf-8') : '';
-        const documentCss = fs.existsSync(path.join(distDir, 'document.css'))
-            ? fs.readFileSync(path.join(distDir, 'document.css'), 'utf-8') : '';
-        const sidebarCss = fs.existsSync(path.join(distDir, 'sidebar.css'))
-            ? fs.readFileSync(path.join(distDir, 'sidebar.css'), 'utf-8') : '';
+        const themeCss = HtmlBuilder._readDistOrSourceCss(distDir, 'theme.css');
+        const documentCss = HtmlBuilder._readDistOrSourceCss(distDir, 'document.css');
+        const toolbarCss = HtmlBuilder._readDistOrSourceCss(distDir, 'toolbar.css');
+        const sidebarCss = HtmlBuilder._readDistOrSourceCss(distDir, 'sidebar.css');
 
         // Đọc KaTeX CSS và inline fonts base64
         let katexCss = fs.existsSync(path.join(distDir, 'katex.css'))
@@ -118,7 +112,10 @@ export class HtmlBuilder {
 
         const settingsOverrides = HtmlBuilder._buildSettingsOverrides(settings, false);
         const bodyClass = HtmlBuilder._themeClass(settings?.theme);
-        const sidebarHtml = HtmlBuilder._buildTocHtml(toc);
+        const toolbarHtml = settings?.showToolbar === false ? '' : HtmlBuilder._buildToolbarHtml();
+        const sidebarHtml = settings?.showTocSidebar === false ? '' : HtmlBuilder._buildTocHtml(toc);
+        const pageWidth = settings?.pageWidth || 'standard';
+        const topPadding = settings?.showToolbar === false ? '32px' : '84px';
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -131,22 +128,22 @@ export class HtmlBuilder {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Merriweather:wght@400;700&display=swap">
     <style>${themeCss}</style>
     <style>${documentCss}</style>
+    <style>${toolbarCss}</style>
     <style>${sidebarCss}</style>
     <style>${katexCss}</style>
     ${settingsOverrides ? `<style>${settingsOverrides}</style>` : ''}
     <style>
-        /* Hide toolbar/right-panel — export chỉ hiện document + sidebar */
-        #toolbar, .right-panel { display: none !important; }
-        #document-container { padding-top: 32px; min-height: 100vh; }
-        /* Make sidebar TOC links look like native items */
+        #document-container { padding-top: ${topPadding}; min-height: 100vh; }
         #sidebar-toc a { color: inherit; text-decoration: none; display: block; }
+        .dropdown-menu { display: none !important; }
     </style>
 </head>
 <body class="${bodyClass}">
+    ${toolbarHtml}
     <div class="workspace-shell">
         ${sidebarHtml ? `<aside id="sidebar-toc">${sidebarHtml}</aside>` : ''}
         <main id="document-container">
-            <div id="document-paper" class="width-standard">
+            <div id="document-paper" class="width-${pageWidth}">
                 <div id="document-content">${html}</div>
             </div>
         </main>
@@ -162,10 +159,34 @@ export class HtmlBuilder {
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
             mermaid.initialize({ startOnLoad: true, theme: ${HtmlBuilder._isDarkTheme(settings?.theme) ? "'dark'" : "'default'"}, securityLevel: 'loose' });
+            function syncToolbarPosition() {
+                var container = document.getElementById('document-container');
+                var tb = document.getElementById('toolbar');
+                if (!container || !tb) { return; }
+                var rect = container.getBoundingClientRect();
+                tb.style.left = (rect.left + rect.width / 2) + 'px';
+                tb.style.transform = 'translateX(-50%)';
+            }
+            window.addEventListener('resize', syncToolbarPosition);
+            syncToolbarPosition();
         })();
     </script>
 </body>
 </html>`;
+    }
+
+    private static _readDistOrSourceCss(distDir: string, fileName: string): string {
+        const distPath = path.join(distDir, fileName);
+        if (fs.existsSync(distPath)) {
+            return fs.readFileSync(distPath, 'utf-8');
+        }
+
+        const sourcePath = path.join(distDir, '..', 'webview', 'styles', fileName);
+        if (fs.existsSync(sourcePath)) {
+            return fs.readFileSync(sourcePath, 'utf-8');
+        }
+
+        return '';
     }
 
     private static _themeClass(theme?: PdfSettings['theme']): string {
@@ -249,6 +270,24 @@ body.${themeName}-mode hr {
             return `<div class="toc-item level-${item.level}"><a href="#${item.slug}">${text}</a></div>`;
         }).join('\n');
         return `<div class="toc-header">Contents</div>\n${items}`;
+    }
+
+    private static _buildToolbarHtml(): string {
+        return `
+    <div id="toolbar">
+        <button class="export-pill export-pdf-toggle" title="Export PDF">Export PDF <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="export-pill" title="Export HTML">HTML</button>
+        <button class="export-pill export-pdf-toggle" title="Export PNG">PNG <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="export-pill" title="Export DOCX">DOCX</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" title="Preview Settings"><span class="tb-label">Settings</span></button>
+        <div class="toolbar-sep"></div>
+        <div class="zoom-controls"><button class="zoom-btn">-</button><span id="zoom-label">100%</span><button class="zoom-btn">+</button></div>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" title="Preview Theme"><span class="tb-label" id="theme-label">Theme</span><svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" title="Collapse Toolbar"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>`;
     }
 
     private static _inlineFontUrls(css: string, distDir: string, pattern: RegExp): string {

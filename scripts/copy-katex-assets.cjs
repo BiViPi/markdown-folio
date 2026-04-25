@@ -53,9 +53,11 @@ fs.copyFileSync(sourcePdfCss, targetPdfCss);
 // Copy webview theme + document CSS for HTML export
 const sourceThemeCss = path.join(root, 'webview', 'styles', 'theme.css');
 const sourceDocumentCss = path.join(root, 'webview', 'styles', 'document.css');
+const sourceToolbarCss = path.join(root, 'webview', 'styles', 'toolbar.css');
 const sourceSidebarCss = path.join(root, 'webview', 'styles', 'sidebar.css');
 fs.copyFileSync(sourceThemeCss, path.join(distDir, 'theme.css'));
 fs.copyFileSync(sourceDocumentCss, path.join(distDir, 'document.css'));
+fs.copyFileSync(sourceToolbarCss, path.join(distDir, 'toolbar.css'));
 fs.copyFileSync(sourceSidebarCss, path.join(distDir, 'sidebar.css'));
 
 console.log('Copied KaTeX assets, mermaid.min.js, DM fonts, Merriweather, document.pdf.css, and webview CSS to dist/');

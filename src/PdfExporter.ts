@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import puppeteer from 'puppeteer-core';
-import { PDFDocument, PDFName, PDFDict, PDFRef, PDFNumber, PDFArray, PDFString } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFDict, PDFRef, PDFNumber, PDFArray, PDFHexString } from 'pdf-lib';
 
 export interface PdfOptions {
     orientation: 'portrait' | 'landscape';
@@ -176,7 +176,7 @@ export class PdfExporter {
             dest.push(PDFNumber.of(0));
 
             const dict = PDFDict.withContext(context);
-            dict.set(PDFName.of('Title'), PDFString.of(text));
+            dict.set(PDFName.of('Title'), PDFHexString.fromText(text));
             dict.set(PDFName.of('Dest'), dest);
             return context.register(dict);
         };
