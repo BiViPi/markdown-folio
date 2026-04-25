@@ -23,7 +23,7 @@
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph và nhiều loại khác
 - **Typography** — Font DM Serif Display cho tiêu đề, DM Sans cho nội dung, tùy chỉnh font và khoảng cách thoải mái
 - **Mục lục** — Tự động tạo từ heading, click để điều hướng
-- **Dark & Light Mode** — Toolbar nổi glassmorphic, chuyển đổi bất cứ lúc nào
+- **6 Theme chuyên nghiệp** — Ivory, Admiral, Serene, Cyberpunk, Dracula, và GitHub
 
 ---
 

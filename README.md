@@ -23,7 +23,7 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph, and more
 - **Typography** — DM Serif Display headings, DM Sans body, fully configurable fonts and spacing
 - **Table of Contents** — Auto-generated sidebar, click to navigate
-- **Dark & Light Mode** — Glassmorphic floating toolbar, toggle anytime
+- **6 Professional Themes** — Ivory, Admiral, Serene, Cyberpunk, Dracula, and GitHub
 
 ---
 
