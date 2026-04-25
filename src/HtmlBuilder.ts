@@ -145,6 +145,7 @@ export class HtmlBuilder {
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
         (function() {
+            window._mermaidDone = false;
             document.querySelectorAll('code.language-mermaid').forEach(function(el) {
                 var div = document.createElement('div');
                 div.className = 'mermaid';
@@ -153,6 +154,11 @@ export class HtmlBuilder {
                 if (pre) { pre.replaceWith(div); } else { el.replaceWith(div); }
             });
             mermaid.initialize({ startOnLoad: true, theme: ${HtmlBuilder._isDarkTheme(settings?.theme) ? "'dark'" : "'default'"}, securityLevel: 'loose' });
+            mermaid.run({ querySelector: '.mermaid' }).then(function() {
+                window._mermaidDone = true;
+            }).catch(function() {
+                window._mermaidDone = true;
+            });
         })();
     </script>
 </body>

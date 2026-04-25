@@ -270,11 +270,12 @@ export class PreviewPanel {
             const baseName = path.basename(this._document.fileName, '.md');
             const distDir = path.join(this._extensionUri.fsPath, 'dist');
             const settings = SettingsManager.read();
-            const pngHtml = HtmlBuilder.buildPdfHtml({
+            const pngHtml = HtmlBuilder.buildExportHtml({
                 html: this._lastRenderedHtml,
                 distDir,
                 settings,
                 title: this._lastTitle,
+                toc: this._lastToc,
             });
 
             if (mode === 'full') {

@@ -7,17 +7,24 @@ import { PdfExporter } from './PdfExporter';
 export interface PngOptions {
     outputPath: string;
     mode: 'full' | 'pages';
-    pageWidthPx?: number;   // default 794 (A4 at 96dpi)
-    pageHeightPx?: number;  // default 1123 (A4 at 96dpi)
-    deviceScaleFactor?: number; // default 2 (Retina quality)
+    pageWidthPx?: number;
+    pageHeightPx?: number;
+    deviceScaleFactor?: number;
+}
+
+interface ScreenshotClip {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
 export class PngExporter {
     static async export(html: string, options: PngOptions): Promise<void> {
         const chromePath = PdfExporter.findChromePath();
 
-        const pageW = options.pageWidthPx ?? 794;
-        const pageH = options.pageHeightPx ?? 1123;
+        const pageW = options.pageWidthPx ?? 1280;
+        const pageH = options.pageHeightPx ?? 1600;
         const dsr = options.deviceScaleFactor ?? 2;
 
         const tmpFile = path.join(os.tmpdir(), `mf-png-${Date.now()}.html`);
@@ -39,26 +46,35 @@ export class PngExporter {
                 { timeout: 15000 }
             );
 
+            const paperMetrics = await PngExporter._getPaperMetrics(page);
+
             if (options.mode === 'full') {
-                const buffer: Buffer = await page.screenshot({ type: 'png', fullPage: true });
+                const buffer: Buffer = await page.screenshot({
+                    type: 'png',
+                    clip: paperMetrics.fullClip,
+                });
                 fs.writeFileSync(options.outputPath, buffer);
             } else {
-                // Pages mode: screenshot từng "trang" theo chiều cao viewport
-                const totalHeight: number = await page.evaluate(
-                    () => document.documentElement.scrollHeight
-                );
-                const pageCount = Math.ceil(totalHeight / pageH);
-
-                // outputPath là folder path cho pages mode
                 if (!fs.existsSync(options.outputPath)) {
                     fs.mkdirSync(options.outputPath, { recursive: true });
                 }
                 const baseName = path.basename(options.outputPath);
+                const pageCount = Math.ceil(paperMetrics.fullClip.height / paperMetrics.paperHeight);
 
                 for (let i = 0; i < pageCount; i++) {
+                    const y = paperMetrics.fullClip.y + i * paperMetrics.paperHeight;
+                    const height = Math.min(
+                        paperMetrics.paperHeight,
+                        paperMetrics.fullClip.y + paperMetrics.fullClip.height - y
+                    );
                     const buffer: Buffer = await page.screenshot({
                         type: 'png',
-                        clip: { x: 0, y: i * pageH, width: pageW, height: pageH },
+                        clip: {
+                            x: paperMetrics.fullClip.x,
+                            y,
+                            width: paperMetrics.fullClip.width,
+                            height,
+                        },
                     });
                     const fileName = `${baseName}-p${i + 1}.png`;
                     fs.writeFileSync(path.join(options.outputPath, fileName), buffer);
@@ -68,5 +84,38 @@ export class PngExporter {
             await browser.close();
             fs.unlinkSync(tmpFile);
         }
+    }
+
+    private static async _getPaperMetrics(page: any): Promise<{
+        fullClip: ScreenshotClip;
+        paperHeight: number;
+    }> {
+        return page.evaluate(() => {
+            const paper = document.getElementById('document-paper');
+            if (!paper) {
+                const width = document.documentElement.scrollWidth;
+                const height = document.documentElement.scrollHeight;
+                return {
+                    fullClip: { x: 0, y: 0, width, height },
+                    paperHeight: height,
+                };
+            }
+
+            const rect = paper.getBoundingClientRect();
+            const scrollX = window.scrollX || document.documentElement.scrollLeft;
+            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            const style = window.getComputedStyle(paper);
+            const marginBottom = parseFloat(style.marginBottom) || 0;
+
+            return {
+                fullClip: {
+                    x: Math.max(0, Math.floor(rect.left + scrollX)),
+                    y: Math.max(0, Math.floor(rect.top + scrollY)),
+                    width: Math.ceil(rect.width),
+                    height: Math.ceil(rect.height + marginBottom),
+                },
+                paperHeight: Math.ceil(rect.width * 297 / 210),
+            };
+        });
     }
 }
