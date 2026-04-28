@@ -131,9 +131,11 @@ export class PreviewPanel {
                     case 'export-png-pages':
                         this._handleExportPng('pages');
                         return;
-                    case 'copy-html':
-                        this._handleCopyHtml();
+                    case 'copy': {
+                        const payload = message.payload;
+                        this._handleCopy(payload);
                         return;
+                    }
                     case 'export-docx':
                         this._handleExportDocx();
                         return;
@@ -233,17 +235,34 @@ export class PreviewPanel {
         }
     }
 
-    private async _handleCopyHtml() {
+    private async _handleCopy(payload: any) {
         if (!this._guardContent()) return;
         try {
-            const snippet = HtmlBuilder.buildClipboardHtmlSnippet({
-                html: this._lastRenderedHtml,
-            });
-            await vscode.env.clipboard.writeText(snippet);
-            vscode.window.showInformationMessage('Rendered HTML copied to clipboard');
+            if (payload.mode === 'notion-markdown') {
+                const markdown = this._buildNotionMarkdownSource();
+                await vscode.env.clipboard.writeText(markdown);
+                vscode.window.showInformationMessage('Markdown copied for Notion');
+            } else if (payload.mode === 'rich-html-fallback') {
+                const text = payload.html || payload.text || '';
+                await vscode.env.clipboard.writeText(text);
+                vscode.window.showInformationMessage('Copied (Fallback Text/HTML)');
+            } else if (payload.mode === 'plain-text-fallback') {
+                await vscode.env.clipboard.writeText(payload.text || '');
+                vscode.window.showInformationMessage('Copied (Plain Text)');
+            }
         } catch (err: any) {
-            vscode.window.showErrorMessage(`Markdown Folio: Copy HTML failed — ${err.message}`);
+            vscode.window.showErrorMessage(`Markdown Folio: Copy failed - ${err.message}`);
         }
+    }
+
+    private _buildNotionMarkdownSource(): string {
+        let text = this._document.getText();
+        // Normalize CRLF to LF
+        text = text.replace(/\r\n/g, '\n');
+        // Remove YAML frontmatter if it starts at the top
+        text = text.replace(/^---\n[\s\S]*?\n---\n?/, '');
+        // Trim leading/trailing blank lines
+        return text.trim();
     }
 
     private async _handleExportHtml(): Promise<void> {
@@ -431,7 +450,9 @@ export class PreviewPanel {
                         Export PDF <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <button class="export-pill" id="export-html" title="Export HTML">HTML</button>
-                    <button class="export-pill" id="copy-html" title="Copy rendered HTML">Copy</button>
+                    <button class="export-pill export-pdf-toggle" id="copy-dropdown-toggle" title="Copy">
+                        Copy <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
                     <button class="export-pill export-pdf-toggle" id="png-dropdown-toggle" title="Export PNG">
                         PNG <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
@@ -456,6 +477,14 @@ export class PreviewPanel {
                     <button class="toolbar-btn" id="toolbar-toggle" title="Collapse Toolbar">
                         <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
+                </div>
+
+                <div id="copy-dropdown" class="dropdown-menu">
+                    <div class="popover-group">
+                        <button id="copy-rich-html" class="toolbar-btn"><span class="tb-label">Rich HTML</span></button>
+                        <button id="copy-notion-markdown" class="toolbar-btn"><span class="tb-label">Notion Markdown</span></button>
+                        <button id="copy-plain-text" class="toolbar-btn"><span class="tb-label">Plain Text</span></button>
+                    </div>
                 </div>
 
                 <div id="png-dropdown" class="dropdown-menu">

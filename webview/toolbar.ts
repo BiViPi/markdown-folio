@@ -36,8 +36,45 @@ export class Toolbar {
             });
         });
 
-        document.getElementById('copy-html')?.addEventListener('click', async () => {
-            await this._copyRenderedHtml();
+        document.getElementById('copy-rich-html')?.addEventListener('click', async () => {
+            this._closeAllDropdowns();
+            try {
+                const el = document.getElementById('document-content');
+                if (!el) return;
+                const htmlStr = '<div class="markdown-folio-content">\n' + el.innerHTML + '\n</div>';
+                const textStr = el.innerText;
+                if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+                    throw new Error('Rich clipboard is not available');
+                }
+                const item = new ClipboardItem({
+                    'text/html': new Blob([htmlStr], { type: 'text/html' }),
+                    'text/plain': new Blob([textStr], { type: 'text/plain' })
+                });
+                await navigator.clipboard.write([item]);
+                this._flashCopyButton(document.getElementById('copy-dropdown-toggle'), 'Copied');
+            } catch (err) {
+                const el = document.getElementById('document-content');
+                this.vscode.postMessage({ type: 'copy', payload: { mode: 'rich-html-fallback', html: el ? '<div class="markdown-folio-content">\n' + el.innerHTML + '\n</div>' : '', text: el ? el.innerText : '' } });
+            }
+        });
+
+        document.getElementById('copy-plain-text')?.addEventListener('click', async () => {
+            this._closeAllDropdowns();
+            try {
+                const el = document.getElementById('document-content');
+                if (!el) return;
+                await navigator.clipboard.writeText(el.innerText);
+                this._flashCopyButton(document.getElementById('copy-dropdown-toggle'), 'Copied');
+            } catch (err) {
+                const el = document.getElementById('document-content');
+                this.vscode.postMessage({ type: 'copy', payload: { mode: 'plain-text-fallback', text: el ? el.innerText : '' } });
+            }
+        });
+
+        document.getElementById('copy-notion-markdown')?.addEventListener('click', () => {
+            this._closeAllDropdowns();
+            this.vscode.postMessage({ type: 'copy', payload: { mode: 'notion-markdown' } });
+            this._flashCopyButton(document.getElementById('copy-dropdown-toggle'), 'Copied');
         });
 
         document.getElementById('export-html')?.addEventListener('click', () => {
@@ -58,6 +95,7 @@ export class Toolbar {
             this.vscode.postMessage({ type: 'export-docx', payload: {} });
         });
 
+        this._initDropdown('copy-dropdown-toggle', 'copy-dropdown');
         this._initDropdown('pdf-dropdown-toggle', 'pdf-dropdown');
         this._initDropdown('png-dropdown-toggle', 'png-dropdown');
         this._initDropdown('settings-dropdown-toggle', 'settings-dropdown');
@@ -263,41 +301,13 @@ export class Toolbar {
         applyZoom();
     }
 
-    private async _copyRenderedHtml() {
-        const button = document.getElementById('copy-html');
-        const content = document.getElementById('document-content');
-        if (!content) {
-            this.vscode.postMessage({ type: 'copy-html', payload: {} });
-            return;
-        }
-
-        const html = `<div class="markdown-folio-content">${content.innerHTML}</div>`;
-        const text = content.innerText || content.textContent || '';
-
-        try {
-            if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
-                await navigator.clipboard.write([
-                    new ClipboardItem({
-                        'text/html': new Blob([html], { type: 'text/html' }),
-                        'text/plain': new Blob([text], { type: 'text/plain' })
-                    })
-                ]);
-            } else {
-                await navigator.clipboard.writeText(text);
-            }
-            this._flashCopyButton(button, 'Copied');
-        } catch {
-            this.vscode.postMessage({ type: 'copy-html', payload: {} });
-            this._flashCopyButton(button, 'Copied');
-        }
-    }
 
     private _flashCopyButton(button: HTMLElement | null, label: string) {
         if (!button) return;
-        const original = button.textContent || 'Copy';
+        const original = button.innerHTML;
         button.textContent = label;
         window.setTimeout(() => {
-            button.textContent = original;
+            button.innerHTML = original;
         }, 1200);
     }
 

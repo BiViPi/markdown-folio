@@ -134,6 +134,11 @@ body.light-mode #toolbar {
     min-width: 160px;
 }
 
+#copy-dropdown {
+    left: calc(50% - 230px);
+    min-width: 170px;
+}
+
 #settings-dropdown {
     right: calc(50% - 310px);
     min-width: 260px;
