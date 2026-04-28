@@ -36,8 +36,8 @@ export class Toolbar {
             });
         });
 
-        document.getElementById('copy-html')?.addEventListener('click', () => {
-            this.vscode.postMessage({ type: 'copy-html', payload: {} });
+        document.getElementById('copy-html')?.addEventListener('click', async () => {
+            await this._copyRenderedHtml();
         });
 
         document.getElementById('export-html')?.addEventListener('click', () => {
@@ -261,6 +261,44 @@ export class Toolbar {
         });
 
         applyZoom();
+    }
+
+    private async _copyRenderedHtml() {
+        const button = document.getElementById('copy-html');
+        const content = document.getElementById('document-content');
+        if (!content) {
+            this.vscode.postMessage({ type: 'copy-html', payload: {} });
+            return;
+        }
+
+        const html = `<div class="markdown-folio-content">${content.innerHTML}</div>`;
+        const text = content.innerText || content.textContent || '';
+
+        try {
+            if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                        'text/plain': new Blob([text], { type: 'text/plain' })
+                    })
+                ]);
+            } else {
+                await navigator.clipboard.writeText(text);
+            }
+            this._flashCopyButton(button, 'Copied');
+        } catch {
+            this.vscode.postMessage({ type: 'copy-html', payload: {} });
+            this._flashCopyButton(button, 'Copied');
+        }
+    }
+
+    private _flashCopyButton(button: HTMLElement | null, label: string) {
+        if (!button) return;
+        const original = button.textContent || 'Copy';
+        button.textContent = label;
+        window.setTimeout(() => {
+            button.textContent = original;
+        }, 1200);
     }
 
     public syncFromSettings(settings: {

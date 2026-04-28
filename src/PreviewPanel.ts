@@ -235,11 +235,15 @@ export class PreviewPanel {
 
     private async _handleCopyHtml() {
         if (!this._guardContent()) return;
-        const snippet = HtmlBuilder.buildClipboardHtmlSnippet({
-            html: this._lastRenderedHtml,
-        });
-        await vscode.env.clipboard.writeText(snippet);
-        vscode.window.showInformationMessage('HTML source copied to clipboard');
+        try {
+            const snippet = HtmlBuilder.buildClipboardHtmlSnippet({
+                html: this._lastRenderedHtml,
+            });
+            await vscode.env.clipboard.writeText(snippet);
+            vscode.window.showInformationMessage('Rendered HTML copied to clipboard');
+        } catch (err: any) {
+            vscode.window.showErrorMessage(`Markdown Folio: Copy HTML failed — ${err.message}`);
+        }
     }
 
     private async _handleExportHtml(): Promise<void> {
@@ -427,7 +431,7 @@ export class PreviewPanel {
                         Export PDF <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     <button class="export-pill" id="export-html" title="Export HTML">HTML</button>
-                    <button class="export-pill" id="copy-html" title="Copy HTML Source">Source</button>
+                    <button class="export-pill" id="copy-html" title="Copy rendered HTML">Copy</button>
                     <button class="export-pill export-pdf-toggle" id="png-dropdown-toggle" title="Export PNG">
                         PNG <svg class="dropdown-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
