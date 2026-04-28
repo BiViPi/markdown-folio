@@ -83,6 +83,11 @@
         "command": "markdownFolio.exportPngPages",
         "title": "Markdown Folio: Export PNG (Pages)",
         "category": "Markdown Folio"
+      },
+      {
+        "command": "markdownFolio.pasteImage",
+        "title": "Markdown Folio: Paste Image from Clipboard",
+        "category": "Markdown Folio"
       }
     ],
     "menus": {
@@ -205,9 +210,22 @@
           "type": "string",
           "default": "",
           "description": "Watermark text to display on pages."
+        },
+        "markdownFolio.pasteImage.folder": {
+          "type": "string",
+          "default": "assets",
+          "description": "Folder relative to the current markdown file to save pasted images."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "markdownFolio.pasteImage",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v",
+        "when": "editorTextFocus && editorLangId == markdown"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",

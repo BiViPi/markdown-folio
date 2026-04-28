@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { PreviewPanel } from './PreviewPanel';
+import { PasteImageHandler } from './PasteImageHandler';
 import { MarkdownFolioEditorProvider } from './MarkdownFolioEditorProvider';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -7,6 +8,12 @@ export function activate(context: vscode.ExtensionContext) {
     channel.appendLine('Markdown Folio activating...');
 
     // Register as a custom editor — appears in "Select editor for *.md" dropdown
+    context.subscriptions.push(
+        vscode.commands.registerCommand('markdownFolio.pasteImage', () => {
+            PasteImageHandler.handlePasteImage();
+        })
+    );
+
     context.subscriptions.push(MarkdownFolioEditorProvider.register(context));
 
     const openPreview = vscode.commands.registerCommand('markdownFolio.openPreview', async (uri?: vscode.Uri) => {
