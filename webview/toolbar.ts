@@ -194,6 +194,23 @@ export class Toolbar {
                         });
                     }
                 }
+
+                if (group === 'line-spacing') {
+                    const value = chip.dataset.value as 'compact' | 'normal' | 'relaxed';
+                    const map = { compact: '1.5', normal: '1.72', relaxed: '2.0' };
+                    document.documentElement.style.setProperty('--line-height-body', map[value]);
+                    this.vscode.postMessage({ type: 'update-settings', payload: { lineSpacing: value } });
+                }
+
+                if (group === 'page-width') {
+                    const value = chip.dataset.value as 'narrow' | 'standard' | 'wide';
+                    const paper = document.getElementById('document-paper');
+                    if (paper) {
+                        paper.className = paper.className.replace(/width-\w+/g, '').trim();
+                        paper.classList.add(`width-${value}`);
+                    }
+                    this.vscode.postMessage({ type: 'update-settings', payload: { pageWidth: value } });
+                }
             });
         });
 
@@ -248,6 +265,8 @@ export class Toolbar {
         showTocSidebar?: boolean;
         theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
         bodyFont?: string;
+        lineSpacing?: 'compact' | 'normal' | 'relaxed';
+        pageWidth?: 'narrow' | 'standard' | 'wide';
     }) {
         // Sync font chips
         if (settings.bodyFont !== undefined) {
@@ -280,6 +299,20 @@ export class Toolbar {
             });
         }
         
+        // Sync line spacing chips
+        if (settings.lineSpacing !== undefined) {
+            document.querySelectorAll<HTMLElement>('.set-chip[data-group="line-spacing"]').forEach(c => {
+                c.classList.toggle('active', c.dataset.value === settings.lineSpacing);
+            });
+        }
+
+        // Sync page width chips
+        if (settings.pageWidth !== undefined) {
+            document.querySelectorAll<HTMLElement>('.set-chip[data-group="page-width"]').forEach(c => {
+                c.classList.toggle('active', c.dataset.value === settings.pageWidth);
+            });
+        }
+
         // Sync TOC sidebar toggle
         if (settings.showTocSidebar !== undefined) {
             const toggle = document.querySelector<HTMLElement>('.set-toggle[data-action="toc-sidebar"]');

@@ -517,10 +517,26 @@ export class PreviewPanel {
                                 <button class="set-chip" data-group="heading-size">L</button>
                             </div>
                         </div>
+                        <div class="set-row">
+                            <span class="set-row-label">Line spacing</span>
+                            <div class="set-chips">
+                                <button class="set-chip" data-group="line-spacing" data-value="compact">Compact</button>
+                                <button class="set-chip" data-group="line-spacing" data-value="normal">Normal</button>
+                                <button class="set-chip" data-group="line-spacing" data-value="relaxed">Relaxed</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="popover-divider"></div>
                     <div class="popover-group">
                         <div class="pop-section-label">Layout</div>
+                        <div class="set-row">
+                            <span class="set-row-label">Page width</span>
+                            <div class="set-chips">
+                                <button class="set-chip" data-group="page-width" data-value="narrow">Narrow</button>
+                                <button class="set-chip" data-group="page-width" data-value="standard">Standard</button>
+                                <button class="set-chip" data-group="page-width" data-value="wide">Wide</button>
+                            </div>
+                        </div>
                         <div class="set-row">
                             <span class="set-row-label">TOC Sidebar</span>
                             <span class="set-toggle on" data-action="toc-sidebar"></span>
