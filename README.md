@@ -8,11 +8,20 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 
 ## Preview
 
-**Light Mode**
-![Markdown Folio — Light Mode](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/light_mode.png)
+**Ivory Theme**
+![Ivory](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/ivory.png)
 
-**Dark Mode**
-![Markdown Folio — Dark Mode](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/dark_mode.png)
+**Admiral Theme**
+![Admiral](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/admiral.png)
+
+**Serene Theme**
+![Serene](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/serene.png)
+
+**Cyberpunk Theme**
+![Cyberpunk](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/cyberpunk.png)
+
+**Dracula Theme**
+![Dracula](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/dracula.png)
 
 ---
 
