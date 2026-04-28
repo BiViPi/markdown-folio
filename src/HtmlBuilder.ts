@@ -321,4 +321,14 @@ body.${themeName}-mode hr {
 
         return lines.join('\n');
     }
+
+    /**
+     * Build HTML snippet for copying to clipboard.
+     * V1 just returns the wrapped rendered HTML without inlining CSS.
+     */
+    static buildClipboardHtmlSnippet(params: { html: string }): string {
+        return `<div class="markdown-folio-content">
+${params.html}
+</div>`;
+    }
 }

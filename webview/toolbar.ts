@@ -36,6 +36,10 @@ export class Toolbar {
             });
         });
 
+        document.getElementById('copy-html')?.addEventListener('click', () => {
+            this.vscode.postMessage({ type: 'copy-html', payload: {} });
+        });
+
         document.getElementById('export-html')?.addEventListener('click', () => {
             this.vscode.postMessage({ type: 'export-html', payload: {} });
         });
