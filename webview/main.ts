@@ -1,6 +1,7 @@
 import { Renderer } from './renderer';
 import { Toolbar } from './toolbar';
 import { Toc } from './toc';
+import { ScrollSync } from './scrollSync';
 import mermaid from 'mermaid';
 import './styles/theme.css';
 import './styles/document.css';
@@ -13,6 +14,7 @@ const vscode = acquireVsCodeApi();
 const renderer = new Renderer('document-content');
 const toolbar = new Toolbar(vscode);
 const toc = new Toc('sidebar-toc');
+const scrollSync = new ScrollSync(vscode, 'document-container');
 
 // Center toolbar over #document-container (not full viewport, to account for TOC sidebar)
 function syncToolbarPosition() {
@@ -46,9 +48,13 @@ window.addEventListener('message', event => {
             if (config) {
                 applySettings(config);
                 toolbar.syncFromSettings(config);
+                scrollSync.setEnabled(config.scrollSync !== false);
             }
             renderer.render(message.payload.html);
             toc.render(message.payload.toc);
+
+            // Build scroll index immediately so sync works for non-mermaid content
+            scrollSync.rebuildIndex();
 
             // Re-sync toolbar after TOC sidebar show/hide changes layout
             setTimeout(syncToolbarPosition, 50);
@@ -65,7 +71,10 @@ window.addEventListener('message', event => {
                     el.classList.add('mermaid'); // Fix class for re-render targeting
                 });
                 mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
-                mermaid.run({ nodes }).catch(() => { /* silent */ });
+                // Rebuild index again after Mermaid finishes (async DOM changes shift positions)
+                mermaid.run({ nodes })
+                    .then(() => scrollSync.rebuildIndex())
+                    .catch(() => scrollSync.rebuildIndex()); // Re-index even on failure (fallback <pre> still has anchor)
             }
             break;
         }
@@ -73,6 +82,9 @@ window.addEventListener('message', event => {
             const oldTheme = document.body.className;
             applySettings(message.payload);
             toolbar.syncFromSettings(message.payload);
+            if (message.payload.scrollSync !== undefined) {
+                scrollSync.setEnabled(message.payload.scrollSync !== false);
+            }
             setTimeout(syncToolbarPosition, 50);
             
             // Re-render mermaid if theme actually changed
@@ -84,9 +96,15 @@ window.addEventListener('message', event => {
                     const nodes = Array.from(mermaidCodes);
                     nodes.forEach(el => el.removeAttribute('data-processed'));
                     mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
-                    mermaid.run({ nodes }).catch(() => { /* silent */ });
+                    mermaid.run({ nodes })
+                        .then(() => scrollSync.rebuildIndex())
+                        .catch(() => scrollSync.rebuildIndex());
                 }
             }
+            break;
+        }
+        case 'scroll-to-line': {
+            scrollSync.handleMessage(message);
             break;
         }
     }
@@ -102,6 +120,7 @@ function applySettings(settings: {
     showToolbar?: boolean;
     showTocSidebar?: boolean;
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
+    scrollSync?: boolean;
 }) {
     const root = document.documentElement;
     if (settings.headingFont) { root.style.setProperty('--font-heading', settings.headingFont); }

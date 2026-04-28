@@ -10,6 +10,7 @@ export interface PreviewSettings {
     showToolbar: boolean;
     showTocSidebar: boolean;
     theme: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
+    scrollSync: boolean;
 }
 
 const DEFAULTS: PreviewSettings = {
@@ -22,6 +23,7 @@ const DEFAULTS: PreviewSettings = {
     showToolbar: true,
     showTocSidebar: true,
     theme: 'ivory',
+    scrollSync: true,
 };
 
 export class SettingsManager {
@@ -39,6 +41,7 @@ export class SettingsManager {
             showToolbar: cfg.get<boolean>('showToolbar', DEFAULTS.showToolbar),
             showTocSidebar: cfg.get<boolean>('showTocSidebar', DEFAULTS.showTocSidebar),
             theme: cfg.get<'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github'>('theme', DEFAULTS.theme),
+            scrollSync: cfg.get<boolean>('scrollSync', DEFAULTS.scrollSync),
         };
     }
 

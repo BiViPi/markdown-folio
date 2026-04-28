@@ -26,6 +26,8 @@ export class PreviewPanel {
     private _lastRenderedHtml = '';
     private _lastToc: import('./shared/types').TocItem[] = [];
     private _lastTitle = '';
+    private _scrollEventCounter = 0;
+    private _scrollThrottleTimer: NodeJS.Timeout | null = null;
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -96,6 +98,25 @@ export class PreviewPanel {
                 this._update();
             }
         }, null, this._disposables);
+
+        // Forward scroll sync: editor visible range → preview
+        this._disposables.push(
+            vscode.window.onDidChangeTextEditorVisibleRanges(e => {
+                if (e.textEditor.document !== this._document) { return; }
+                if (!this._panel.visible) { return; }
+                if (!SettingsManager.read().scrollSync) { return; }
+                const line = e.textEditor.visibleRanges[0]?.start.line ?? 0;
+                // Throttle at ~50ms
+                if (this._scrollThrottleTimer) { return; }
+                this._scrollThrottleTimer = setTimeout(() => {
+                    this._scrollThrottleTimer = null;
+                    this._panel.webview.postMessage({
+                        type: 'scroll-to-line',
+                        payload: { line, eventId: ++this._scrollEventCounter }
+                    });
+                }, 50);
+            })
+        );
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
@@ -395,11 +416,11 @@ export class PreviewPanel {
         const documentContent = this._document.getText();
         const documentDir = path.dirname(this._document.fileName);
 
-        const { title, author, date, content } = FrontmatterParser.extract(documentContent);
+        const { title, author, date, content, lineOffset } = FrontmatterParser.extract(documentContent);
         const base64MappedContent = PathResolver.resolveImages(content, documentDir);
         const toc = TocGenerator.extract(content);
 
-        const html = PreviewPanel._markdownEngine.render(base64MappedContent);
+        const html = PreviewPanel._markdownEngine.render(base64MappedContent, lineOffset);
         this._lastRenderedHtml = html;
         this._lastToc = toc;
         this._lastTitle = title || path.basename(this._document.fileName, '.md');

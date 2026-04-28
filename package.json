@@ -215,6 +215,11 @@
           "type": "string",
           "default": "assets",
           "description": "Folder relative to the current markdown file to save pasted images."
+        },
+        "markdownFolio.scrollSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Synchronize preview scroll position with the editor cursor position."
         }
       }
     },

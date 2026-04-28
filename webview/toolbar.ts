@@ -286,6 +286,8 @@ export class Toolbar {
             if (zoomLabel) {
                 zoomLabel.textContent = `${Math.round(this._zoom * 100)}%`;
             }
+            // Notify ScrollSync that zoom changed — getBoundingClientRect positions shift
+            document.dispatchEvent(new CustomEvent('markdown-folio:zoom-changed', { detail: { zoom: this._zoom } }));
         };
 
         zoomIn?.addEventListener('click', () => {
