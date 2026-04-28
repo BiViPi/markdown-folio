@@ -29,6 +29,7 @@ export class PreviewPanel {
     private _scrollEventCounter = 0;
     private _scrollThrottleTimer: NodeJS.Timeout | null = null;
     private _pendingScrollLine = 0;
+    private _mode: 'side' | 'customEditor' = 'side';
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -43,7 +44,9 @@ export class PreviewPanel {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')]
         };
-        return new PreviewPanel(panel, context.extensionUri, document);
+        const instance = new PreviewPanel(panel, context.extensionUri, document);
+        instance._mode = 'customEditor';
+        return instance;
     }
 
     public static createOrShow(context: vscode.ExtensionContext, document: vscode.TextDocument) {
@@ -161,6 +164,10 @@ export class PreviewPanel {
                     case 'export-docx':
                         this._handleExportDocx();
                         return;
+                    case 'reveal-line': {
+                        this._handleRevealLine(message.payload);
+                        return;
+                    }
                 }
             },
             null,
@@ -204,6 +211,21 @@ export class PreviewPanel {
             return false;
         }
         return true;
+    }
+
+    private _handleRevealLine(payload: { line: number; eventId?: number }): void {
+        // Custom editor mode: never auto-open text editor
+        if (this._mode === 'customEditor') { return; }
+        // Respect scrollSync setting
+        if (!SettingsManager.read().scrollSync) { return; }
+        // Only reveal if a visible text editor is already showing this document
+        const editor = vscode.window.visibleTextEditors.find(e => e.document === this._document);
+        if (!editor) { return; }
+        const line = payload.line ?? 0;
+        editor.revealRange(
+            new vscode.Range(line, 0, line, 0),
+            vscode.TextEditorRevealType.AtTop
+        );
     }
 
     private async _handleExportPdf(

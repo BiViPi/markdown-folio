@@ -1,16 +1,25 @@
 /**
- * ScrollSync — Phase 1: editor → preview forward sync only.
+ * ScrollSync — Phase 1 + Phase 2
  *
- * Listens for 'scroll-to-line' messages from the extension host and scrolls
- * #document-container to the corresponding anchor element.
+ * Phase 1: listens for 'scroll-to-line' messages from extension host → scrolls preview.
+ * Phase 2: listens to container scroll events → posts 'reveal-line' to extension host.
  *
- * Uses getBoundingClientRect() instead of offsetTop to handle the
+ * Loop guard: when a 'scroll-to-line' arrives we record a timestamp.
+ * Any 'reveal-line' that would be emitted within 200ms after that is suppressed
+ * to prevent the editor → preview → editor → … feedback loop.
+ *
+ * Uses getBoundingClientRect() instead of offsetTop to handle
  * transform:scale() on #document-paper correctly at any zoom level.
  */
 export class ScrollSync {
     private _container: HTMLElement | null;
     private _index: Array<{ line: number; el: HTMLElement }> = [];
     private _enabled: boolean = true;
+
+    // Phase 2: loop guard fields
+    private _lastInboundTimestamp = 0;
+    private _revealEventCounter = 0;
+    private _debounceRevealTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(private vscode: any, containerId: string) {
         this._container = document.getElementById(containerId);
@@ -19,6 +28,11 @@ export class ScrollSync {
         document.addEventListener('markdown-folio:zoom-changed', () => {
             this.rebuildIndex();
         });
+
+        // Phase 2: listen to preview scroll, debounce 100ms, post reveal-line
+        this._container?.addEventListener('scroll', () => {
+            this._onContainerScroll();
+        }, { passive: true });
     }
 
     /** Rebuild anchor index from current DOM state. Call after render and after Mermaid. */
@@ -42,13 +56,74 @@ export class ScrollSync {
     public handleMessage(message: any): void {
         if (!this._enabled) { return; }
         if (message.type === 'scroll-to-line') {
+            // Record inbound timestamp for loop guard BEFORE scrolling
+            this._lastInboundTimestamp = Date.now();
             this._scrollToLine(message.payload.line as number);
         }
     }
 
     public dispose(): void {
         this._index = [];
+        if (this._debounceRevealTimer) {
+            clearTimeout(this._debounceRevealTimer);
+            this._debounceRevealTimer = null;
+        }
     }
+
+    // ─── Phase 2 ────────────────────────────────────────────────────────────
+
+    private _onContainerScroll(): void {
+        if (!this._enabled) { return; }
+
+        // Debounce: only fire 100ms after scroll stops
+        if (this._debounceRevealTimer) {
+            clearTimeout(this._debounceRevealTimer);
+        }
+        this._debounceRevealTimer = setTimeout(() => {
+            this._debounceRevealTimer = null;
+            this._emitRevealLine();
+        }, 100);
+    }
+
+    private _emitRevealLine(): void {
+        if (!this._enabled) { return; }
+
+        // Loop guard: suppress if a scroll-to-line arrived within the last 200ms
+        if (Date.now() - this._lastInboundTimestamp < 200) { return; }
+
+        const line = this._findTopAnchorLine();
+        if (line === null) { return; }
+
+        this.vscode.postMessage({
+            type: 'reveal-line',
+            payload: { line, eventId: ++this._revealEventCounter }
+        });
+    }
+
+    /** Find the source line of the anchor element closest to (and at/above) the visible top. */
+    private _findTopAnchorLine(): number | null {
+        const container = this._container;
+        if (!container || this._index.length === 0) { return null; }
+
+        const containerRect = container.getBoundingClientRect();
+        const toolbarOffset = this._getToolbarOffset(containerRect);
+        const viewportTop = containerRect.top + toolbarOffset;
+
+        // Find the last anchor whose top is <= viewportTop (i.e., at or above current scroll top)
+        let best: { line: number; el: HTMLElement } | null = null;
+        for (const anchor of this._index) {
+            const r = anchor.el.getBoundingClientRect();
+            if (r.top <= viewportTop + 16) { // +16px tolerance
+                best = anchor;
+            } else {
+                break;
+            }
+        }
+
+        return best ? best.line : this._index[0]?.line ?? null;
+    }
+
+    // ─── Phase 1 ────────────────────────────────────────────────────────────
 
     private _scrollToLine(targetLine: number): void {
         const container = this._container;
@@ -78,7 +153,6 @@ export class ScrollSync {
 
         const positionOf = (el: HTMLElement): number => {
             const r = el.getBoundingClientRect();
-            // scrollTop + element's position relative to the visible container top
             return container.scrollTop + (r.top - containerRect.top) - toolbarOffset;
         };
 
