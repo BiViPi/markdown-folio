@@ -39,6 +39,34 @@ resizeObserver.observe(document.getElementById('document-container') ?? document
 window.addEventListener('resize', syncToolbarPosition);
 syncToolbarPosition();
 
+function getMermaidTheme(): 'dark' | 'default' {
+    const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
+    return isDarkTheme ? 'dark' : 'default';
+}
+
+function prepareMermaidNodes(nodes: HTMLElement[], restoreSource: boolean): void {
+    nodes.forEach(el => {
+        if (!el.dataset.mermaidSource) {
+            el.dataset.mermaidSource = el.textContent || '';
+        }
+        if (restoreSource) {
+            el.textContent = el.dataset.mermaidSource || '';
+        }
+        el.removeAttribute('data-processed');
+        el.classList.remove('language-mermaid');
+        el.classList.add('mermaid');
+    });
+}
+
+function runMermaid(nodes: HTMLElement[], restoreSource: boolean): Promise<void> {
+    if (nodes.length === 0) {
+        return Promise.resolve();
+    }
+    prepareMermaidNodes(nodes, restoreSource);
+    mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
+    return mermaid.run({ nodes }).then(() => undefined);
+}
+
 // Handle messages from the extension host
 window.addEventListener('message', event => {
     const message = event.data;
@@ -62,17 +90,9 @@ window.addEventListener('message', event => {
             // Render mermaid
             const mermaidCodes = document.querySelectorAll<HTMLElement>('.language-mermaid');
             if (mermaidCodes.length > 0) {
-                const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
-                const theme = isDarkTheme ? 'dark' : 'default';
                 const nodes = Array.from(mermaidCodes);
-                nodes.forEach(el => {
-                    el.removeAttribute('data-processed');
-                    el.classList.remove('language-mermaid');
-                    el.classList.add('mermaid'); // Fix class for re-render targeting
-                });
-                mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
                 // Rebuild index again after Mermaid finishes (async DOM changes shift positions)
-                mermaid.run({ nodes })
+                runMermaid(nodes, false)
                     .then(() => scrollSync.rebuildIndex())
                     .catch(() => scrollSync.rebuildIndex()); // Re-index even on failure (fallback <pre> still has anchor)
             }
@@ -91,12 +111,8 @@ window.addEventListener('message', event => {
             if (oldTheme !== document.body.className) {
                 const mermaidCodes = document.querySelectorAll<HTMLElement>('.mermaid');
                 if (mermaidCodes.length > 0) {
-                    const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
-                    const theme = isDarkTheme ? 'dark' : 'default';
                     const nodes = Array.from(mermaidCodes);
-                    nodes.forEach(el => el.removeAttribute('data-processed'));
-                    mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
-                    mermaid.run({ nodes })
+                    runMermaid(nodes, true)
                         .then(() => scrollSync.rebuildIndex())
                         .catch(() => scrollSync.rebuildIndex());
                 }

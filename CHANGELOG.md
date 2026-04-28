@@ -8,6 +8,10 @@
     - **Notion Markdown**: Clean Markdown source with stripped YAML frontmatter, specifically designed for pasting into Notion blocks.
     - **Plain Text**: Clean visible text extracted directly from the preview.
 - **Paste Image from Clipboard**: Use `Ctrl+Alt+V` to automatically save clipboard images to a local `assets/` folder. Images are timestamped to avoid collisions and instantly linked in Markdown.
+- **Bi-directional Scroll Sync**: Seamlessly synchronize your position between the Markdown editor and the preview.
+    - **Editor to Preview**: The preview automatically scrolls as you move through the source document.
+    - **Preview to Editor**: Scrolling the preview reveals the corresponding lines in the visible text editor.
+    - Optimized for complex documents containing YAML frontmatter, large code blocks, and Mermaid diagrams.
 - **Enhanced Settings UI**: Added granular controls for **Line Spacing** (Compact, Normal, Relaxed) and **Page Width** (Narrow, Standard, Wide) in the preview settings.
 
 ## [1.2.1] - 2026-04-25
