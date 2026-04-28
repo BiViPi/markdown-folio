@@ -12,9 +12,6 @@ export class ScrollSync {
     private _index: Array<{ line: number; el: HTMLElement }> = [];
     private _enabled: boolean = true;
 
-    // Approximate height of the fixed toolbar so we don't hide content behind it
-    private static readonly TOOLBAR_OFFSET = 84;
-
     constructor(private vscode: any, containerId: string) {
         this._container = document.getElementById(containerId);
 
@@ -77,11 +74,12 @@ export class ScrollSync {
         }
 
         const containerRect = container.getBoundingClientRect();
+        const toolbarOffset = this._getToolbarOffset(containerRect);
 
         const positionOf = (el: HTMLElement): number => {
             const r = el.getBoundingClientRect();
             // scrollTop + element's position relative to the visible container top
-            return container.scrollTop + (r.top - containerRect.top) - ScrollSync.TOOLBAR_OFFSET;
+            return container.scrollTop + (r.top - containerRect.top) - toolbarOffset;
         };
 
         let targetTop: number;
@@ -95,5 +93,19 @@ export class ScrollSync {
         }
 
         container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+    }
+
+    private _getToolbarOffset(containerRect: DOMRect): number {
+        const toolbar = document.getElementById('toolbar');
+        if (!toolbar || toolbar.style.display === 'none') {
+            return 0;
+        }
+
+        const rect = toolbar.getBoundingClientRect();
+        if (rect.height === 0) {
+            return 0;
+        }
+
+        return Math.max(0, rect.bottom - containerRect.top + 12);
     }
 }

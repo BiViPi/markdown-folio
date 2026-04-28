@@ -28,6 +28,7 @@ export class PreviewPanel {
     private _lastTitle = '';
     private _scrollEventCounter = 0;
     private _scrollThrottleTimer: NodeJS.Timeout | null = null;
+    private _pendingScrollLine = 0;
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -105,14 +106,14 @@ export class PreviewPanel {
                 if (e.textEditor.document !== this._document) { return; }
                 if (!this._panel.visible) { return; }
                 if (!SettingsManager.read().scrollSync) { return; }
-                const line = e.textEditor.visibleRanges[0]?.start.line ?? 0;
-                // Throttle at ~50ms
+                this._pendingScrollLine = e.textEditor.visibleRanges[0]?.start.line ?? 0;
+                // Throttle at ~50ms, but always send the latest observed line.
                 if (this._scrollThrottleTimer) { return; }
                 this._scrollThrottleTimer = setTimeout(() => {
                     this._scrollThrottleTimer = null;
                     this._panel.webview.postMessage({
                         type: 'scroll-to-line',
-                        payload: { line, eventId: ++this._scrollEventCounter }
+                        payload: { line: this._pendingScrollLine, eventId: ++this._scrollEventCounter }
                     });
                 }, 50);
             })
@@ -183,6 +184,10 @@ export class PreviewPanel {
         PreviewPanel.currentPanel = undefined;
 
         // Clean up our resources
+        if (this._scrollThrottleTimer) {
+            clearTimeout(this._scrollThrottleTimer);
+            this._scrollThrottleTimer = null;
+        }
         this._panel.dispose();
 
         while (this._disposables.length) {
