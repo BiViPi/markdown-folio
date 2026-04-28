@@ -4,8 +4,7 @@
  * Phase 1: listens for 'scroll-to-line' messages from extension host → scrolls preview.
  * Phase 2: listens to container scroll events → posts 'reveal-line' to extension host.
  *
- * Loop guard: when a 'scroll-to-line' arrives we record a timestamp.
- * Any 'reveal-line' that would be emitted within 200ms after that is suppressed
+ * Loop guard: when a 'scroll-to-line' arrives we suppress reverse sync briefly
  * to prevent the editor → preview → editor → … feedback loop.
  *
  * Uses getBoundingClientRect() instead of offsetTop to handle
@@ -18,6 +17,7 @@ export class ScrollSync {
 
     // Phase 2: loop guard fields
     private _lastInboundTimestamp = 0;
+    private _suppressRevealUntil = 0;
     private _revealEventCounter = 0;
     private _debounceRevealTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -58,6 +58,7 @@ export class ScrollSync {
         if (message.type === 'scroll-to-line') {
             // Record inbound timestamp for loop guard BEFORE scrolling
             this._lastInboundTimestamp = Date.now();
+            this._suppressRevealUntil = Date.now() + 900;
             this._scrollToLine(message.payload.line as number);
         }
     }
@@ -74,6 +75,7 @@ export class ScrollSync {
 
     private _onContainerScroll(): void {
         if (!this._enabled) { return; }
+        if (Date.now() < this._suppressRevealUntil) { return; }
 
         // Debounce: only fire 100ms after scroll stops
         if (this._debounceRevealTimer) {
@@ -88,8 +90,8 @@ export class ScrollSync {
     private _emitRevealLine(): void {
         if (!this._enabled) { return; }
 
-        // Loop guard: suppress if a scroll-to-line arrived within the last 200ms
-        if (Date.now() - this._lastInboundTimestamp < 200) { return; }
+        // Loop guard: suppress if a scroll-to-line arrived very recently.
+        if (Date.now() < this._suppressRevealUntil || Date.now() - this._lastInboundTimestamp < 200) { return; }
 
         const line = this._findTopAnchorLine();
         if (line === null) { return; }

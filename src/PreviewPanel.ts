@@ -30,6 +30,7 @@ export class PreviewPanel {
     private _scrollThrottleTimer: NodeJS.Timeout | null = null;
     private _pendingScrollLine = 0;
     private _mode: 'side' | 'customEditor' = 'side';
+    private _suppressForwardScrollUntil = 0;
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -109,6 +110,7 @@ export class PreviewPanel {
                 if (e.textEditor.document !== this._document) { return; }
                 if (!this._panel.visible) { return; }
                 if (!SettingsManager.read().scrollSync) { return; }
+                if (Date.now() < this._suppressForwardScrollUntil) { return; }
                 this._pendingScrollLine = e.textEditor.visibleRanges[0]?.start.line ?? 0;
                 // Throttle at ~50ms, but always send the latest observed line.
                 if (this._scrollThrottleTimer) { return; }
@@ -222,6 +224,11 @@ export class PreviewPanel {
         const editor = vscode.window.visibleTextEditors.find(e => e.document === this._document);
         if (!editor) { return; }
         const line = payload.line ?? 0;
+        if (this._scrollThrottleTimer) {
+            clearTimeout(this._scrollThrottleTimer);
+            this._scrollThrottleTimer = null;
+        }
+        this._suppressForwardScrollUntil = Date.now() + 500;
         editor.revealRange(
             new vscode.Range(line, 0, line, 0),
             vscode.TextEditorRevealType.AtTop
