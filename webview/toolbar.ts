@@ -129,12 +129,36 @@ export class Toolbar {
             this._closeAllDropdowns();
             if (willOpen) {
                 dropdown.classList.add('show');
+                this._positionDropdown(toggle, dropdown);
             }
         });
 
         dropdown.addEventListener('click', event => {
             event.stopPropagation();
         });
+    }
+
+    private _positionDropdown(toggle: HTMLElement, dropdown: HTMLElement) {
+        const toolbar = document.getElementById('toolbar');
+        if (!toolbar) {
+            return;
+        }
+
+        dropdown.style.left = '0px';
+        dropdown.style.right = 'auto';
+
+        const toggleRect = toggle.getBoundingClientRect();
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const toolbarRect = toolbar.getBoundingClientRect();
+        const viewportPadding = 12;
+        const top = toolbarRect.bottom + 8;
+
+        let left = toggleRect.left + (toggleRect.width / 2) - (dropdownRect.width / 2);
+        const maxLeft = window.innerWidth - dropdownRect.width - viewportPadding;
+        left = Math.max(viewportPadding, Math.min(left, maxLeft));
+
+        dropdown.style.top = `${Math.round(top)}px`;
+        dropdown.style.left = `${Math.round(left)}px`;
     }
 
     private _initPaperOptions() {
@@ -316,6 +340,7 @@ export class Toolbar {
     public syncFromSettings(settings: {
         fontSize?: number;
         headingSize?: 'S' | 'M' | 'L';
+        toolbarCollapsed?: boolean;
         showTocSidebar?: boolean;
         theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
         bodyFont?: string;
@@ -384,6 +409,10 @@ export class Toolbar {
                 themeLabel.textContent = displayName;
             }
         }
+
+        if (settings.toolbarCollapsed !== undefined) {
+            this._setToolbarCollapsed(settings.toolbarCollapsed, false);
+        }
     }
 
     private _updateExportBadge() {
@@ -405,22 +434,40 @@ export class Toolbar {
 
         toggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            toolbar.classList.toggle('collapsed');
-            
-            // Re-sync position
-            const syncPos = (window as any).syncToolbarPosition;
-            if (typeof syncPos === 'function') {
-                syncPos();
-            }
-
-            const icon = toggle.querySelector('svg path');
-            if (icon) {
-                if (toolbar.classList.contains('collapsed')) {
-                    icon.setAttribute('d', 'M15 18l-6-6 6-6'); // < (To Expand)
-                } else {
-                    icon.setAttribute('d', 'M9 5l7 7-7 7'); // > (To Collapse)
-                }
-            }
+            this._setToolbarCollapsed(!toolbar.classList.contains('collapsed'), true);
         });
+    }
+
+    private _setToolbarCollapsed(collapsed: boolean, persist: boolean) {
+        const toggle = document.getElementById('toolbar-toggle');
+        const toolbar = document.getElementById('toolbar');
+        if (!toggle || !toolbar) {
+            return;
+        }
+
+        toolbar.classList.toggle('collapsed', collapsed);
+
+        const syncPos = (window as any).syncToolbarPosition;
+        if (typeof syncPos === 'function') {
+            syncPos();
+        }
+
+        const icon = toggle.querySelector('svg path');
+        if (icon) {
+            if (collapsed) {
+                icon.setAttribute('d', 'M15 18l-6-6 6-6'); // < (To Expand)
+            } else {
+                icon.setAttribute('d', 'M9 5l7 7-7 7'); // > (To Collapse)
+            }
+        }
+
+        toggle.setAttribute('title', collapsed ? 'Expand Toolbar' : 'Collapse Toolbar');
+
+        if (persist) {
+            this.vscode.postMessage({
+                type: 'toolbar-collapsed-changed',
+                payload: { collapsed }
+            });
+        }
     }
 }

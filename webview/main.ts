@@ -134,6 +134,7 @@ function applySettings(settings: {
     lineSpacing?: string;
     pageWidth?: string;
     showToolbar?: boolean;
+    toolbarCollapsed?: boolean;
     showTocSidebar?: boolean;
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
     scrollSync?: boolean;
@@ -166,6 +167,9 @@ function applySettings(settings: {
         if (container) {
             container.style.paddingTop = settings.showToolbar ? '' : '32px';
         }
+    }
+    if (settings.toolbarCollapsed !== undefined) {
+        toolbar.syncFromSettings({ toolbarCollapsed: settings.toolbarCollapsed });
     }
     if (settings.showTocSidebar !== undefined) {
         const sidebar = document.getElementById('sidebar-toc');

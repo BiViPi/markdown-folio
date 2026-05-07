@@ -125,27 +125,19 @@ body.light-mode #toolbar {
     display: block;
 }
 
-#pdf-dropdown {
-    left: calc(50% - 310px);
-}
-
 #png-dropdown {
-    left: calc(50% - 170px);
     min-width: 160px;
 }
 
 #copy-dropdown {
-    left: calc(50% - 230px);
     min-width: 170px;
 }
 
 #settings-dropdown {
-    right: calc(50% - 310px);
     min-width: 260px;
 }
 
 #theme-dropdown {
-    right: calc(50% - 415px);
     min-width: 110px;
     padding: 6px;
 }
@@ -333,12 +325,3 @@ body.light-mode #toolbar {
     color: var(--gold-color);
 }
 
-@media (max-width: 1100px) {
-    #pdf-dropdown {
-        left: 12px;
-    }
-
-    #settings-dropdown {
-        right: 12px;
-    }
-}

@@ -13,6 +13,7 @@ import { PngExporter } from './PngExporter';
 import { DocxExporter } from './DocxExporter';
 
 export class PreviewPanel {
+    private static readonly _toolbarCollapsedStateKey = 'markdownFolio.toolbarCollapsed';
     private static readonly _markdownEngine = new MarkdownEngine();
     public static currentPanel: PreviewPanel | undefined;
     private readonly _panel: vscode.WebviewPanel;
@@ -31,6 +32,7 @@ export class PreviewPanel {
     private _pendingScrollLine = 0;
     private _mode: 'side' | 'customEditor' = 'side';
     private _suppressForwardScrollUntil = 0;
+    private _toolbarCollapsed: boolean;
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -45,7 +47,7 @@ export class PreviewPanel {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')]
         };
-        const instance = new PreviewPanel(panel, context.extensionUri, document);
+        const instance = new PreviewPanel(panel, context, document);
         instance._mode = 'customEditor';
         return instance;
     }
@@ -74,13 +76,14 @@ export class PreviewPanel {
             }
         );
 
-        PreviewPanel.currentPanel = new PreviewPanel(panel, context.extensionUri, document);
+        PreviewPanel.currentPanel = new PreviewPanel(panel, context, document);
     }
 
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, document: vscode.TextDocument) {
+    private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, document: vscode.TextDocument) {
         this._panel = panel;
-        this._extensionUri = extensionUri;
+        this._extensionUri = context.extensionUri;
         this._document = document;
+        this._toolbarCollapsed = context.workspaceState.get<boolean>(PreviewPanel._toolbarCollapsedStateKey, false);
 
         // Set the webview's initial html content
         this._update();
@@ -138,6 +141,15 @@ export class PreviewPanel {
                     case 'update-settings':
                         SettingsManager.update(message.payload).catch(err => {
                             vscode.window.showErrorMessage(`Markdown Folio: Failed to save settings: ${err}`);
+                        });
+                        return;
+                    case 'toolbar-collapsed-changed':
+                        this._toolbarCollapsed = !!message.payload?.collapsed;
+                        context.workspaceState.update(
+                            PreviewPanel._toolbarCollapsedStateKey,
+                            this._toolbarCollapsed
+                        ).then(undefined, err => {
+                            vscode.window.showErrorMessage(`Markdown Folio: Failed to persist toolbar state: ${err}`);
                         });
                         return;
                     case 'export-pdf': {
@@ -475,7 +487,10 @@ export class PreviewPanel {
                     html: html,
                     toc: toc,
                     metadata: { title, author, date },
-                    config: settings
+                    config: {
+                        ...settings,
+                        toolbarCollapsed: this._toolbarCollapsed
+                    }
                 }
             });
             this._hasPendingRender = false;

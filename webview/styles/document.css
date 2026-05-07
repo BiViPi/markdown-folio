@@ -11,6 +11,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    border-radius: 28px 28px 0 0;
     background:
         radial-gradient(ellipse 100% 50% at 50% 0%, var(--app-bg-glow-1) 0%, transparent 65%),
         radial-gradient(ellipse 80% 70% at 22% 100%, var(--app-bg-glow-2) 0%, transparent 60%),
@@ -21,7 +22,7 @@
     width: 210mm;
     min-height: 297mm;
     padding: 12mm 24mm 20mm;
-    border-radius: 6px;
+    border-radius: 16px;
     border: 1px solid var(--border-color);
     box-shadow: var(--page-shadow);
     background: var(--page-bg);
@@ -29,6 +30,7 @@
     transform-origin: top center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     margin-bottom: calc((var(--zoom-scale) - 1) * 297mm);
+    overflow: hidden;
 }
 
 #document-paper.width-narrow {
