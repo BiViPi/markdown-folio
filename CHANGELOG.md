@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1] - 2026-05-07
+
+### Fixed
+- Local SVG images now render correctly in preview by resolving local image references to embeddable HTML image tags.
+- Floating toolbar collapsed state now persists when switching between Markdown files.
+- Preview canvas now uses softer rounded corners for a less rigid frame.
+- Toolbar popovers are now centered against their trigger buttons instead of relying on fixed horizontal offsets.
+
 ## [1.3.0] - 2026-04-28
 
 ### Added
@@ -23,4 +31,3 @@
 - PNG export now uses preview styling instead of PDF/Ivory styling.
 - PNG full-page and per-page exports now capture the document paper area instead of clipping by viewport.
 - PDF export now keeps a white paper background with readable print text; Dracula uses a print-safe accent color.
-
