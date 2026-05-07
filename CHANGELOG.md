@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2026-05-07
+
+### Changed
+- Removed global startup activation and scoped extension activation to the Markdown Folio custom editor to reduce unnecessary startup cost.
+
 ## [1.3.1] - 2026-05-07
 
 ### Fixed
