@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.4.0] - 2026-05-13
+
+### Added
+- TikZ diagram support in preview using system LaTeX (`pdflatex` + `dvisvgm`).
+- TikZ export support for HTML, PDF, and PNG via resolved inline SVG.
+- TikZ image fallback in DOCX export.
+- Reading stats in preview: reading time, word count, and character count.
+- Hoverable header deep-links in preview and HTML export.
+- Image lightbox in preview.
+- Configurable print margin guides in preview.
+- Direct export commands for PDF, HTML, DOCX, and PNG.
+
+### Changed
+- Browser-based rasterization is now shared between Mermaid and TikZ DOCX export paths.
+- Preview lightbox styling was refined to separate screenshots and transparent images more clearly from the canvas background.
+- Documentation now includes TikZ setup requirements for LaTeX-based rendering.
+
+### Fixed
+- PDF and HTML export commands now work correctly in VSCodium by registering direct command handlers instead of relying only on the preview toolbar flow.
+- TikZ rendering now uses a `dvisvgm` invocation compatible with the current MiKTeX toolchain on Windows.
+- DOCX export now falls back safely when TikZ or Mermaid rasterization is unavailable.
+
 ## [1.3.2] - 2026-05-07
 
 ### Changed
@@ -16,16 +38,10 @@
 ## [1.3.0] - 2026-04-28
 
 ### Added
-- **Smart Copy Dropdown**: New "Copy" menu offering three context-aware modes:
-    - **Rich HTML**: Optimized for pasting into Gmail, Outlook, Word, and Google Docs (supports formatted text and structure).
-    - **Notion Markdown**: Clean Markdown source with stripped YAML frontmatter, specifically designed for pasting into Notion blocks.
-    - **Plain Text**: Clean visible text extracted directly from the preview.
-- **Paste Image from Clipboard**: Use `Ctrl+Alt+V` to automatically save clipboard images to a local `assets/` folder. Images are timestamped to avoid collisions and instantly linked in Markdown.
-- **Bi-directional Scroll Sync**: Seamlessly synchronize your position between the Markdown editor and the preview.
-    - **Editor to Preview**: The preview automatically scrolls as you move through the source document.
-    - **Preview to Editor**: Scrolling the preview reveals the corresponding lines in the visible text editor.
-    - Optimized for complex documents containing YAML frontmatter, large code blocks, and Mermaid diagrams.
-- **Enhanced Settings UI**: Added granular controls for **Line Spacing** (Compact, Normal, Relaxed) and **Page Width** (Narrow, Standard, Wide) in the preview settings.
+- Smart Copy dropdown with Rich HTML, Notion Markdown, and Plain Text modes.
+- Paste Image from Clipboard with automatic `assets/` insertion.
+- Bi-directional scroll sync between editor and preview.
+- Enhanced preview settings for line spacing and page width.
 
 ## [1.2.1] - 2026-04-25
 

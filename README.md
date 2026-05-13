@@ -33,6 +33,7 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 ### 🔢 Rendering
 - **Math Formulas** — Full KaTeX support for inline `$...$` and display `$$...$$` equations, rendered natively in Word
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph, and more
+- **TikZ Diagrams** — Geometry and technical diagrams rendered through a local LaTeX toolchain, with export support for HTML, PDF, PNG, and DOCX image fallback
 
 ### 🎨 Appearance
 - **6 Professional Themes** — Ivory, Admiral, Serene, Cyberpunk, Dracula, and GitHub
@@ -53,6 +54,8 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 3. Use the floating toolbar to export, copy content, or adjust settings
 
 > PDF and PNG export require **Chrome or Chromium** to be installed on your machine.
+>
+> TikZ blocks require `pdflatex` and `dvisvgm` to be available on your `PATH`. On Windows, install **MiKTeX** or **TeX Live**. On the first TikZ render, MiKTeX may also prompt you to install missing LaTeX packages such as `preview`; accept those installs.
 
 ---
 

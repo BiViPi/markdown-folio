@@ -33,6 +33,7 @@
 ### Rendering
 - **Công thức toán học** — Hỗ trợ đầy đủ KaTeX cho công thức inline `$...$` và display `$$...$$`, đồng thời render native vào Word
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph và nhiều loại sơ đồ khác
+- **TikZ Diagrams** — Hỗ trợ hình học và technical diagrams bằng local LaTeX toolchain, export được sang HTML, PDF, PNG và DOCX image fallback
 
 ### Appearance
 - **6 theme chuyên nghiệp** — Ivory, Admiral, Serene, Cyberpunk, Dracula và GitHub
@@ -53,6 +54,8 @@
 3. Dùng floating toolbar để export, copy nội dung hoặc chỉnh settings
 
 > Export PDF và PNG yêu cầu máy đã cài **Chrome** hoặc **Chromium**.
+>
+> TikZ blocks yêu cầu `pdflatex` và `dvisvgm` có sẵn trên `PATH`. Trên Windows, hãy cài **MiKTeX** hoặc **TeX Live**. Ở lần render TikZ đầu tiên, MiKTeX có thể hỏi cài thêm LaTeX package như `preview`; hãy bấm `Install`.
 
 ---
 
