@@ -34,7 +34,14 @@
     "theme": "dark"
   },
   "activationEvents": [
-    "onCustomEditor:markdownFolio.customEditor"
+    "onCustomEditor:markdownFolio.customEditor",
+    "onCommand:markdownFolio.openPreview",
+    "onCommand:markdownFolio.exportPdf",
+    "onCommand:markdownFolio.exportDocx",
+    "onCommand:markdownFolio.exportHtml",
+    "onCommand:markdownFolio.exportPngFull",
+    "onCommand:markdownFolio.exportPngPages",
+    "onCommand:markdownFolio.pasteImage"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -218,6 +225,11 @@
           "type": "boolean",
           "default": true,
           "description": "Synchronize preview scroll position with the editor cursor position."
+        },
+        "markdownFolio.showPrintMargins": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show subtle horizontal page-break guides in the preview panel based on A4 paper dimensions."
         }
       }
     },

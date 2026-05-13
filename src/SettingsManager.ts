@@ -9,6 +9,7 @@ export interface PreviewSettings {
     pageWidth: 'narrow' | 'standard' | 'wide';
     showToolbar: boolean;
     showTocSidebar: boolean;
+    showPrintMargins: boolean;
     theme: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
     scrollSync: boolean;
 }
@@ -22,6 +23,7 @@ const DEFAULTS: PreviewSettings = {
     pageWidth: 'standard',
     showToolbar: true,
     showTocSidebar: true,
+    showPrintMargins: false,
     theme: 'ivory',
     scrollSync: true,
 };
@@ -40,6 +42,7 @@ export class SettingsManager {
             pageWidth: cfg.get<'narrow' | 'standard' | 'wide'>('pageWidth', DEFAULTS.pageWidth),
             showToolbar: cfg.get<boolean>('showToolbar', DEFAULTS.showToolbar),
             showTocSidebar: cfg.get<boolean>('showTocSidebar', DEFAULTS.showTocSidebar),
+            showPrintMargins: cfg.get<boolean>('showPrintMargins', DEFAULTS.showPrintMargins),
             theme: cfg.get<'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github'>('theme', DEFAULTS.theme),
             scrollSync: cfg.get<boolean>('scrollSync', DEFAULTS.scrollSync),
         };

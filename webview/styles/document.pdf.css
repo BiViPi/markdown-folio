@@ -259,3 +259,50 @@ hr {
 .auto-toc {
     display: none;
 }
+
+/* ── TikZ diagrams ───────────────────────────────────────── */
+.tikz-diagram {
+    display: flex;
+    justify-content: center;
+    margin: 1.5em 0;
+    page-break-inside: avoid;
+}
+
+.tikz-diagram svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.tikz-error,
+.tikz-unavailable {
+    font-size: 9pt;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 0.75em 1em;
+    margin: 1em 0;
+    page-break-inside: avoid;
+}
+
+.tikz-error-label {
+    font-weight: 600;
+    margin-bottom: 0.4em;
+}
+
+.tikz-error-msg {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 8pt;
+    margin: 0.25em 0 0;
+    white-space: pre-wrap;
+}
+
+.tikz-loading {
+    font-style: italic;
+    font-size: 9pt;
+    color: #666;
+}
+
+/* ── Header anchors: hidden in PDF (plan §3.2.1) ────────── */
+/* Direct rule — @media print does not apply in document.pdf.css context */
+.header-anchor {
+    display: none;
+}

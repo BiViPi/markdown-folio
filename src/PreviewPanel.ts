@@ -11,6 +11,8 @@ import { HtmlBuilder } from './HtmlBuilder';
 import { HtmlExporter } from './HtmlExporter';
 import { PngExporter } from './PngExporter';
 import { DocxExporter } from './DocxExporter';
+import { TikzRenderer } from './engine/TikzRenderer';
+import { DocumentStats, type DocumentStats as DocumentStatsType } from './engine/DocumentStats';
 
 export class PreviewPanel {
     private static readonly _toolbarCollapsedStateKey = 'markdownFolio.toolbarCollapsed';
@@ -33,6 +35,10 @@ export class PreviewPanel {
     private _mode: 'side' | 'customEditor' = 'side';
     private _suppressForwardScrollUntil = 0;
     private _toolbarCollapsed: boolean;
+    private _tikzReadyWaiters: Array<() => void> = [];
+    // Generation counter for TikZ async render guard (D6).
+    // Incremented every _update() call; async results are discarded if stale.
+    private _renderGeneration = 0;
 
     /**
      * Used by MarkdownFolioEditorProvider: VS Code supplies the panel, we just initialise it.
@@ -77,6 +83,46 @@ export class PreviewPanel {
         );
 
         PreviewPanel.currentPanel = new PreviewPanel(panel, context, document);
+    }
+
+    public static async runExportCommand(
+        context: vscode.ExtensionContext,
+        kind: 'pdf' | 'html' | 'docx' | 'png-full' | 'png-pages'
+    ): Promise<void> {
+        const activeDocument = vscode.window.activeTextEditor?.document;
+        const commandDocument = activeDocument?.uri.scheme === 'file' && activeDocument.fileName.toLowerCase().endsWith('.md')
+            ? activeDocument
+            : PreviewPanel.currentPanel?._document;
+
+        if (!commandDocument) {
+            vscode.window.showErrorMessage('Markdown Folio: Active editor must be a Markdown file.');
+            return;
+        }
+
+        PreviewPanel.createOrShow(context, commandDocument);
+        const panel = PreviewPanel.currentPanel;
+        if (!panel) {
+            vscode.window.showErrorMessage('Markdown Folio: Failed to open preview for export.');
+            return;
+        }
+
+        switch (kind) {
+            case 'pdf':
+                await panel._handleExportPdf('portrait', 'A4');
+                return;
+            case 'html':
+                await panel._handleExportHtml();
+                return;
+            case 'docx':
+                await panel._handleExportDocx();
+                return;
+            case 'png-full':
+                await panel._handleExportPng('full');
+                return;
+            case 'png-pages':
+                await panel._handleExportPng('pages');
+                return;
+        }
     }
 
     private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, document: vscode.TextDocument) {
@@ -227,6 +273,30 @@ export class PreviewPanel {
         return true;
     }
 
+    /**
+     * If TikZ is still rendering (pending placeholders in _lastRenderedHtml),
+     * warn the user and let them choose to export now or wait.
+     * Returns true if the export should proceed.
+     */
+    private async _guardTikzReady(): Promise<boolean> {
+        if (!this._hasPendingTikzRender()) {
+            return true;
+        }
+        const choice = await vscode.window.showWarningMessage(
+            'Markdown Folio: TikZ diagrams are still rendering. The exported document may contain placeholder boxes.',
+            'Export Now',
+            'Wait'
+        );
+        if (choice === 'Export Now') {
+            return true;
+        }
+        if (choice === 'Wait') {
+            await this._waitForTikzReady();
+            return true;
+        }
+        return false;
+    }
+
     private _handleRevealLine(payload: { line: number; eventId?: number }): void {
         // Custom editor mode: never auto-open text editor
         if (this._mode === 'customEditor') { return; }
@@ -252,6 +322,7 @@ export class PreviewPanel {
         size: 'A4' | 'A3' | 'Letter'
     ): Promise<void> {
         if (!this._guardContent()) { return; }
+        if (!await this._guardTikzReady()) { return; }
         try {
             const defaultName = path.basename(this._document.fileName, '.md') + '.pdf';
             const saveUri = await vscode.window.showSaveDialog({
@@ -334,6 +405,7 @@ export class PreviewPanel {
 
     private async _handleExportHtml(): Promise<void> {
         if (!this._guardContent()) { return; }
+        if (!await this._guardTikzReady()) { return; }
         try {
             const defaultName = path.basename(this._document.fileName, '.md') + '.html';
             const saveUri = await vscode.window.showSaveDialog({
@@ -368,6 +440,7 @@ export class PreviewPanel {
 
     private async _handleExportPng(mode: 'full' | 'pages'): Promise<void> {
         if (!this._guardContent()) { return; }
+        if (!await this._guardTikzReady()) { return; }
         try {
             const baseName = path.basename(this._document.fileName, '.md');
             const distDir = path.join(this._extensionUri.fsPath, 'dist');
@@ -424,6 +497,7 @@ export class PreviewPanel {
 
     private async _handleExportDocx(): Promise<void> {
         if (!this._guardContent()) { return; }
+        if (!await this._guardTikzReady()) { return; }
         try {
             const defaultName = path.basename(this._document.fileName, '.md') + '.docx';
             const saveUri = await vscode.window.showSaveDialog({
@@ -465,9 +539,11 @@ export class PreviewPanel {
         const { title, author, date, content, lineOffset } = FrontmatterParser.extract(documentContent);
         const base64MappedContent = PathResolver.resolveImages(content, documentDir);
         const toc = TocGenerator.extract(content);
+        const stats = DocumentStats.compute(content);
 
-        const html = PreviewPanel._markdownEngine.render(base64MappedContent, lineOffset);
-        this._lastRenderedHtml = html;
+        const rawHtml = PreviewPanel._markdownEngine.render(base64MappedContent, lineOffset);
+        const gen = ++this._renderGeneration;
+
         this._lastToc = toc;
         this._lastTitle = title || path.basename(this._document.fileName, '.md');
 
@@ -479,13 +555,79 @@ export class PreviewPanel {
             this._htmlInitialized = true;
         }
 
+        // Keep non-TikZ documents on the synchronous preview path.
+        if (!rawHtml.includes('tikz-pending')) {
+            this._lastRenderedHtml = rawHtml;
+            this._sendRender(rawHtml, toc, stats, title, author, date);
+            return;
+        }
+
+        // TikZ two-phase render (plan §3.1.6):
+        // Phase 1 — synchronous: resolve cache hits instantly, send to webview immediately.
+        // Phase 2 — async: resolve cache misses in the background, re-send when done.
+        TikzRenderer.isAvailable().then(available => {
+            if (gen !== this._renderGeneration) { return; } // stale — document changed
+
+            let phase1Html: string;
+            if (!available) {
+                phase1Html = TikzRenderer.resolveUnavailable(rawHtml);
+            } else {
+                phase1Html = TikzRenderer.resolveCacheHits(rawHtml);
+            }
+
+            this._lastRenderedHtml = phase1Html;
+            this._sendRender(phase1Html, toc, stats, title, author, date);
+
+            // Fire async resolution only if there are still unresolved placeholders.
+            if (available && phase1Html.includes('tikz-loading')) {
+                this._resolveTikzAsync(rawHtml, gen, toc, stats, title, author, date);
+            }
+        }).catch(() => {
+            // isAvailable() failed unexpectedly — treat as unavailable.
+            if (gen !== this._renderGeneration) { return; }
+            const fallback = TikzRenderer.resolveUnavailable(rawHtml);
+            this._lastRenderedHtml = fallback;
+            this._sendRender(fallback, toc, stats, title, author, date);
+        });
+    }
+
+    private async _resolveTikzAsync(
+        rawHtml: string,
+        gen: number,
+        toc: import('./shared/types').TocItem[],
+        stats: DocumentStatsType,
+        title: string | undefined,
+        author: string | undefined,
+        date: string | undefined
+    ): Promise<void> {
+        try {
+            const resolvedHtml = await TikzRenderer.resolveAll(rawHtml);
+            if (this._renderGeneration !== gen) { return; } // document changed while rendering
+            this._lastRenderedHtml = resolvedHtml;
+            this._sendRender(resolvedHtml, toc, stats, title, author, date);
+        } catch {
+            // Individual block errors are already encoded inside resolveAll().
+            // Nothing to propagate here.
+        }
+    }
+
+    /** Send the rendered HTML to the webview. Extracted to avoid duplication. */
+    private _sendRender(
+        html: string,
+        toc: import('./shared/types').TocItem[],
+        stats: DocumentStatsType,
+        title: string | undefined,
+        author: string | undefined,
+        date: string | undefined
+    ): void {
         if (this._panel.visible && this._webviewReady) {
             const settings = SettingsManager.read();
             this._panel.webview.postMessage({
                 type: 'render',
                 payload: {
-                    html: html,
-                    toc: toc,
+                    html,
+                    toc,
+                    stats,
                     metadata: { title, author, date },
                     config: {
                         ...settings,
@@ -494,6 +636,30 @@ export class PreviewPanel {
                 }
             });
             this._hasPendingRender = false;
+            this._flushTikzReadyWaitersIfSettled(html);
+        }
+    }
+
+    private _hasPendingTikzRender(html: string = this._lastRenderedHtml): boolean {
+        return html.includes('tikz-pending') || html.includes('tikz-loading');
+    }
+
+    private _waitForTikzReady(): Promise<void> {
+        if (!this._hasPendingTikzRender()) {
+            return Promise.resolve();
+        }
+        return new Promise(resolve => {
+            this._tikzReadyWaiters.push(resolve);
+        });
+    }
+
+    private _flushTikzReadyWaitersIfSettled(html: string): void {
+        if (this._hasPendingTikzRender(html) || this._tikzReadyWaiters.length === 0) {
+            return;
+        }
+        const waiters = this._tikzReadyWaiters.splice(0);
+        for (const resolve of waiters) {
+            resolve();
         }
     }
 
@@ -656,6 +822,10 @@ export class PreviewPanel {
                         <div class="set-row">
                             <span class="set-row-label">TOC Sidebar</span>
                             <span class="set-toggle on" data-action="toc-sidebar"></span>
+                        </div>
+                        <div class="set-row">
+                            <span class="set-row-label">Page guides</span>
+                            <span class="set-toggle" data-action="print-margins"></span>
                         </div>
                     </div>
                 </div>

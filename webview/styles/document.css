@@ -22,6 +22,7 @@
     width: 210mm;
     min-height: 297mm;
     padding: 12mm 24mm 20mm;
+    position: relative;
     border-radius: 16px;
     border: 1px solid var(--border-color);
     box-shadow: var(--page-shadow);
@@ -154,4 +155,176 @@
 
 #document-content tr:nth-child(even) {
     background: var(--table-tr-bg);
+}
+
+/* ── TikZ diagrams ───────────────────────────────────────── */
+.tikz-diagram {
+    display: flex;
+    justify-content: center;
+    margin: 1.5em 0;
+}
+
+.tikz-diagram svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Dark-theme SVG inversion — MVP approximation (plan §3.1.8) */
+body.admiral-mode .tikz-diagram svg,
+body.dracula-mode .tikz-diagram svg,
+body.cyberpunk-mode .tikz-diagram svg {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.tikz-loading {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.875em;
+    padding: 0.5em 0;
+}
+
+.tikz-error,
+.tikz-unavailable {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    padding: 0.75em 1em;
+    margin: 1em 0;
+}
+
+.tikz-error-label {
+    font-weight: 600;
+    margin-bottom: 0.4em;
+    color: var(--text-primary);
+}
+
+.tikz-error-msg {
+    font-family: var(--font-mono, Consolas, 'Courier New', monospace);
+    font-size: 0.82em;
+    margin: 0.25em 0 0;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+/* ── Reading stats strip ─────────────────────────────────── */
+#doc-stats {
+    position: relative;
+    z-index: 1;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    opacity: 0.55;
+    text-align: right;
+    padding: 0.2em 0 0.8em;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5em;
+    letter-spacing: 0.02em;
+}
+
+/* ── Header anchor deep-links ────────────────────────────── */
+.header-anchor {
+    opacity: 0;
+    margin-right: 0.4em;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: opacity 150ms ease;
+    vertical-align: middle;
+}
+
+h1:hover .header-anchor,
+h2:hover .header-anchor,
+h3:hover .header-anchor,
+h4:hover .header-anchor,
+h5:hover .header-anchor,
+h6:hover .header-anchor { opacity: 0.55; }
+
+.header-anchor:hover { opacity: 1 !important; }
+
+.header-anchor-icon {
+    width: 0.7em;
+    height: 0.7em;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+/* ── Image lightbox ──────────────────────────────────────── */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    cursor: zoom-out;
+}
+
+.lightbox-overlay.lightbox-visible { opacity: 1; }
+
+.lightbox-frame {
+    max-width: 90vw;
+    max-height: 90vh;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(241, 247, 255, 0.72) 0%, rgba(228, 238, 250, 0.62) 100%);
+    border: 1px solid rgba(214, 230, 248, 0.58);
+    box-shadow:
+        0 24px 80px rgba(5, 15, 30, 0.26),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset;
+    backdrop-filter: blur(14px) saturate(1.08);
+}
+
+.lightbox-frame img {
+    max-width: calc(90vw - 36px);
+    max-height: calc(90vh - 36px);
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid rgba(214, 226, 242, 0.92);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.98) 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 0 0 1px rgba(255, 255, 255, 0.52),
+        0 12px 28px rgba(27, 39, 61, 0.12),
+        0 28px 72px rgba(14, 24, 42, 0.18);
+    display: block;
+}
+
+/* ── Print margin guides ─────────────────────────────────── */
+:root {
+    --a4-page-h: 1123px;  /* fallback: 794px * 297/210 */
+    --print-margin-color: rgba(0, 0, 0, 0.07);
+}
+
+body.admiral-mode,
+body.dracula-mode,
+body.cyberpunk-mode {
+    --print-margin-color: rgba(255, 255, 255, 0.07);
+}
+
+#document-paper.show-print-margins::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent calc(var(--a4-page-h) - 1px),
+        var(--print-margin-color) calc(var(--a4-page-h) - 1px),
+        var(--print-margin-color) var(--a4-page-h)
+    );
+    background-size: 100% var(--a4-page-h);
+    z-index: 0;
+}
+
+#document-paper > * {
+    position: relative;
+    z-index: 1;
 }

@@ -1,13 +1,13 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import HTMLtoDOCX from 'html-to-docx';
 import JSZip from 'jszip';
 import katex from 'katex';
-import puppeteer from 'puppeteer-core';
 import { PdfExporter } from './PdfExporter';
 import { PdfSettings } from './HtmlBuilder';
 import { MathMlToOmml } from './MathMlToOmml';
+import { BrowserRasterizer, RasterizeJob } from './utils/BrowserRasterizer';
 
 export interface DocxOptions {
     outputPath: string;
@@ -154,12 +154,15 @@ export class DocxExporter {
 
     /**
      * Pre-process HTML:
-     * 1. Mermaid code blocks → PNG images via Puppeteer
-     * 2. KaTeX HTML → OMML marker placeholders (synchronous, no Puppeteer)
+     * 1. Mermaid code blocks → PNG images via BrowserRasterizer
+     * 2. TikZ diagram blocks → PNG images via BrowserRasterizer
+     * 3. KaTeX HTML → OMML marker placeholders (synchronous, no Puppeteer)
      */
     private static async _preprocess(html: string, distDir: string): Promise<{ processed: string; ommlMap: OmmlMap }> {
         let processed = html;
         processed = await DocxExporter.replaceMermaidWithImages(processed, distDir);
+        processed = await DocxExporter.replaceTikzWithImages(processed);
+        processed = DocxExporter.replaceTikzErrorBlocks(processed);
         const { processed: withMarkers, ommlMap } = DocxExporter._replaceKatexWithOmml(processed);
         return { processed: withMarkers, ommlMap };
     }
@@ -240,7 +243,7 @@ export class DocxExporter {
     }
 
     /**
-     * Render each Mermaid diagram to PNG via Puppeteer, replace code block with <img>.
+     * Render each Mermaid diagram to PNG via BrowserRasterizer, replace code block with <img>.
      * Falls back to text placeholder if Chrome is not available.
      */
     static async replaceMermaidWithImages(html: string, distDir: string): Promise<string> {
@@ -254,63 +257,34 @@ export class DocxExporter {
             return DocxExporter._mermaidFallback(html);
         }
 
-        const mermaidJs = path.join(distDir, 'mermaid.min.js').replace(/\\/g, '/');
-        const browser = await puppeteer.launch({
-            executablePath: chromePath,
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
+        const mermaidJsUrl = pathToFileURL(path.join(distDir, 'mermaid.min.js')).href;
 
-        const images: (string | null)[] = [];
+        const jobs: RasterizeJob[] = sources.map(source => ({
+            html: `<!DOCTYPE html><html><head><style>
+                body { margin: 0; padding: 8px; background: white; }
+                .mermaid { display: inline-block; }
+                .mermaid svg { display: block; max-width: 100%; height: auto; }
+            </style></head><body>
+                <div class="mermaid">${source}</div>
+                <script src="${mermaidJsUrl}"><\/script>
+                <script>
+                    window._done = false;
+                    mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+                    mermaid.run({ querySelector: '.mermaid' })
+                        .then(function() { window._done = true; })
+                        .catch(function() { window._done = true; });
+                <\/script>
+            </body></html>`,
+            selector: '.mermaid svg',
+            waitCondition: 'window._done === true',
+            timeout: 15_000,
+        }));
+
+        let images: Array<string | null>;
         try {
-            for (const source of sources) {
-                const pageHtml = `<!DOCTYPE html><html><head><style>
-                    body { margin: 0; padding: 8px; background: white; }
-                    .mermaid { display: inline-block; }
-                    .mermaid svg { display: block; max-width: 100%; height: auto; }
-                </style></head><body>
-                    <div class="mermaid">${source}</div>
-                    <script src="file:///${mermaidJs}"><\/script>
-                    <script>
-                        window._done = false;
-                        mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
-                        mermaid.run({ querySelector: '.mermaid' })
-                            .then(function() { window._done = true; })
-                            .catch(function() { window._done = true; });
-                    <\/script>
-                </body></html>`;
-
-                const tmpFile = path.join(os.tmpdir(), `mf-mermaid-${Date.now()}.html`);
-                fs.writeFileSync(tmpFile, pageHtml, 'utf-8');
-
-                const page = await browser.newPage();
-                await page.setViewport({ width: 900, height: 600 });
-                await page.goto(`file:///${tmpFile.replace(/\\/g, '/')}`, { waitUntil: 'networkidle0' });
-                await page.waitForFunction('window._done === true', { timeout: 15000 });
-
-                const svgEl = await page.$('.mermaid svg');
-                const captureEl = svgEl ?? await page.$('.mermaid');
-                const bbox = captureEl ? await captureEl.boundingBox() : null;
-                if (bbox && bbox.width > 0 && bbox.height > 0) {
-                    const buf = await page.screenshot({
-                        type: 'png',
-                        clip: {
-                            x: Math.max(0, bbox.x),
-                            y: Math.max(0, bbox.y),
-                            width: Math.ceil(bbox.width),
-                            height: Math.ceil(bbox.height),
-                        },
-                    });
-                    images.push(`data:image/png;base64,${Buffer.from(buf).toString('base64')}`);
-                } else {
-                    images.push(null);
-                }
-
-                await page.close();
-                fs.unlinkSync(tmpFile);
-            }
-        } finally {
-            await browser.close();
+            images = await BrowserRasterizer.renderAll(chromePath, jobs);
+        } catch {
+            return DocxExporter._mermaidFallback(html);
         }
 
         let idx = 0;
@@ -321,24 +295,96 @@ export class DocxExporter {
                 if (imgSrc) {
                     return `<img src="${imgSrc}" style="max-width:100%;display:block;margin:8px 0;">`;
                 }
-                const firstLine = content.trim().split('\n')[0] || 'diagram';
+                const firstLine = (content as string).trim().split('\n')[0] || 'diagram';
                 return `<p><em>[Diagram: ${firstLine}]</em></p>`;
             }
         );
+    }
+
+    /**
+     * Rasterize each rendered TikZ SVG block to PNG for DOCX embedding.
+     * TikZ is already resolved to inline SVG by the time DOCX export runs.
+     * Falls back to a text placeholder if Chrome is not available.
+     */
+    static async replaceTikzWithImages(html: string): Promise<string> {
+        const blocks = DocxExporter._extractTikzBlocks(html);
+        if (blocks.length === 0) { return html; }
+
+        let chromePath: string;
+        try {
+            chromePath = PdfExporter.findChromePath();
+        } catch {
+            return DocxExporter._tikzFallback(html);
+        }
+
+        // Each job wraps the raw SVG in a minimal white-background HTML page.
+        const jobs: RasterizeJob[] = blocks.map(b => ({
+            html: `<!DOCTYPE html><html><head><style>
+                html, body { margin: 0; padding: 0; background: white; display: inline-block; }
+                svg { display: block; }
+            </style></head><body>${b.svg}</body></html>`,
+            selector: 'svg',
+        }));
+
+        let images: Array<string | null>;
+        try {
+            images = await BrowserRasterizer.renderAll(chromePath, jobs);
+        } catch {
+            return DocxExporter._tikzFallback(html);
+        }
+
+        let resolved = html;
+        // Replace from end to preserve string indices.
+        for (let i = blocks.length - 1; i >= 0; i--) {
+            const imgSrc = images[i];
+            const replacement = imgSrc
+                ? `<img src="${imgSrc}" style="max-width:100%;display:block;margin:8px 0;">`
+                : `<p><em>[TikZ diagram]</em></p>`;
+            resolved = resolved.slice(0, blocks[i].start) + replacement + resolved.slice(blocks[i].end);
+        }
+        return resolved;
+    }
+
+    /**
+     * DOCX should not preserve preview-only TikZ error UI.
+     * Replace unresolved/unavailable TikZ blocks with a plain text fallback.
+     */
+    static replaceTikzErrorBlocks(html: string): string {
+        const blocks = DocxExporter._extractTikzErrorBlocks(html);
+        if (blocks.length === 0) { return html; }
+
+        let resolved = html;
+        for (let i = blocks.length - 1; i >= 0; i--) {
+            resolved = resolved.slice(0, blocks[i].start) +
+                `<p><em>[TikZ diagram]</em></p>` +
+                resolved.slice(blocks[i].end);
+        }
+        return resolved;
     }
 
     private static _mermaidFallback(html: string): string {
         return html.replace(
             DocxExporter._mermaidBlockRegex(),
             (_match, content) => {
-                const firstLine = content.trim().split('\n')[0] || 'diagram';
+                const firstLine = (content as string).trim().split('\n')[0] || 'diagram';
                 return `<p><em>[Diagram: ${firstLine}]</em></p>`;
             }
         );
     }
 
+    private static _tikzFallback(html: string): string {
+        return html.replace(
+            DocxExporter._tikzBlockRegex(),
+            () => `<p><em>[TikZ diagram]</em></p>`
+        );
+    }
+
     private static _mermaidBlockRegex(): RegExp {
         return /(?:<pre[^>]*>\s*<code[^>]*class="[^"]*language-mermaid[^"]*"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>)|(?:<div[^>]*class="[^"]*\bmermaid\b[^"]*"[^>]*>([\s\S]*?)<\/div>)/g;
+    }
+
+    private static _tikzBlockRegex(): RegExp {
+        return /<div[^>]*class="[^"]*\btikz-diagram\b[^"]*"[^>]*>[\s\S]*?<\/div>/g;
     }
 
     private static _extractMermaidSources(html: string): string[] {
@@ -349,5 +395,77 @@ export class DocxExporter {
             sources.push((m[1] || m[2] || '').trim());
         }
         return sources;
+    }
+
+    /**
+     * Extract all `.tikz-diagram` blocks with their SVG content and string positions.
+     * Positions allow in-place replacement without regex index drift.
+     */
+    private static _extractTikzBlocks(html: string): Array<{ start: number; end: number; svg: string }> {
+        const blocks: Array<{ start: number; end: number; svg: string }> = [];
+        // Match <div class="tikz-diagram" ...> ... </div>
+        // The content may span many lines; close-tag detection via a balanced approach.
+        const openRe = /<div[^>]*class="[^"]*\btikz-diagram\b[^"]*"[^>]*>/g;
+        let m: RegExpExecArray | null;
+
+        while ((m = openRe.exec(html)) !== null) {
+            const blockStart = m.index;
+            const afterOpen = m.index + m[0].length;
+            // Find the matching </div> by tracking nesting depth.
+            let depth = 1;
+            let pos = afterOpen;
+            while (pos < html.length && depth > 0) {
+                const nextOpen = html.indexOf('<div', pos);
+                const nextClose = html.indexOf('</div>', pos);
+                if (nextClose === -1) { pos = html.length; break; }
+                if (nextOpen !== -1 && nextOpen < nextClose) {
+                    depth++;
+                    pos = nextOpen + 4;
+                } else {
+                    depth--;
+                    pos = nextClose + 6;
+                }
+            }
+            const blockEnd = pos;
+            const innerContent = html.slice(afterOpen, blockEnd - 6); // strip trailing </div>
+
+            // Extract the first <svg>...</svg> from within the block.
+            const svgMatch = innerContent.match(/<svg[\s\S]*<\/svg>/i);
+            if (svgMatch) {
+                blocks.push({ start: blockStart, end: blockEnd, svg: svgMatch[0] });
+            }
+        }
+
+        return blocks;
+    }
+
+    private static _extractTikzErrorBlocks(html: string): Array<{ start: number; end: number }> {
+        const blocks: Array<{ start: number; end: number }> = [];
+        const openRe = /<div[^>]*class="[^"]*\btikz-error\b[^"]*"[^>]*>/g;
+        let m: RegExpExecArray | null;
+
+        while ((m = openRe.exec(html)) !== null) {
+            const blockStart = m.index;
+            const afterOpen = m.index + m[0].length;
+            let depth = 1;
+            let pos = afterOpen;
+            while (pos < html.length && depth > 0) {
+                const nextOpen = html.indexOf('<div', pos);
+                const nextClose = html.indexOf('</div>', pos);
+                if (nextClose === -1) { pos = html.length; break; }
+                if (nextOpen !== -1 && nextOpen < nextClose) {
+                    depth++;
+                    pos = nextOpen + 4;
+                } else {
+                    depth--;
+                    pos = nextClose + 6;
+                }
+            }
+            if (depth === 0) {
+                blocks.push({ start: blockStart, end: pos });
+            }
+        }
+
+        return blocks;
     }
 }

@@ -35,7 +35,11 @@ export class MarkdownEngine {
             }
         })
             .use(markdownItAnchor, {
-                permalink: false,
+                permalink: markdownItAnchor.permalink.linkInsideHeader({
+                    symbol: `<svg class="header-anchor-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+                    class: 'header-anchor',
+                    placement: 'before',
+                }),
                 slugify: slugify
             })
             .use(markdownItToc, { containerClass: 'auto-toc', listType: 'ul' })
@@ -61,6 +65,13 @@ export class MarkdownEngine {
             if (rawLang === 'mermaid') {
                 const escaped = md.utils.escapeHtml(token.content);
                 return `<pre data-source-line="${sourceLine}"><code class="language-mermaid">${escaped}</code></pre>`;
+            }
+
+            // TikZ: emit a placeholder resolved host-side by TikzRenderer.
+            // MarkdownEngine stays synchronous — PreviewPanel handles resolution.
+            if (rawLang === 'tikz') {
+                const b64 = Buffer.from(token.content).toString('base64url');
+                return `<div class="tikz-pending" data-tikz="${b64}" data-source-line="${sourceLine}"></div>`;
             }
 
             let inner: string;

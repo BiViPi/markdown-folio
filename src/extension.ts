@@ -30,7 +30,24 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(openPreview);
+    context.subscriptions.push(
+        openPreview,
+        vscode.commands.registerCommand('markdownFolio.exportPdf', async () => {
+            await PreviewPanel.runExportCommand(context, 'pdf');
+        }),
+        vscode.commands.registerCommand('markdownFolio.exportHtml', async () => {
+            await PreviewPanel.runExportCommand(context, 'html');
+        }),
+        vscode.commands.registerCommand('markdownFolio.exportDocx', async () => {
+            await PreviewPanel.runExportCommand(context, 'docx');
+        }),
+        vscode.commands.registerCommand('markdownFolio.exportPngFull', async () => {
+            await PreviewPanel.runExportCommand(context, 'png-full');
+        }),
+        vscode.commands.registerCommand('markdownFolio.exportPngPages', async () => {
+            await PreviewPanel.runExportCommand(context, 'png-pages');
+        })
+    );
 
     // Status bar button — one-click access to preview for markdown files
     const statusBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);

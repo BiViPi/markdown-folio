@@ -2,6 +2,7 @@ import { Renderer } from './renderer';
 import { Toolbar } from './toolbar';
 import { Toc } from './toc';
 import { ScrollSync } from './scrollSync';
+import { Lightbox } from './lightbox';
 import mermaid from 'mermaid';
 import './styles/theme.css';
 import './styles/document.css';
@@ -15,6 +16,7 @@ const renderer = new Renderer('document-content');
 const toolbar = new Toolbar(vscode);
 const toc = new Toc('sidebar-toc');
 const scrollSync = new ScrollSync(vscode, 'document-container');
+const lightbox = new Lightbox();
 
 // Center toolbar over #document-container (not full viewport, to account for TOC sidebar)
 function syncToolbarPosition() {
@@ -72,7 +74,7 @@ window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
         case 'render': {
-            const { config } = message.payload;
+            const { config, stats } = message.payload;
             if (config) {
                 applySettings(config);
                 toolbar.syncFromSettings(config);
@@ -80,6 +82,12 @@ window.addEventListener('message', event => {
             }
             renderer.render(message.payload.html);
             toc.render(message.payload.toc);
+
+            // Attach lightbox after each render (AbortController cleans up previous listeners).
+            lightbox.attach(document.getElementById('document-content')!);
+
+            // Update reading stats strip.
+            if (stats) { updateDocStats(stats); }
 
             // Build scroll index immediately so sync works for non-mermaid content
             scrollSync.rebuildIndex();
@@ -126,6 +134,35 @@ window.addEventListener('message', event => {
     }
 });
 
+interface DocStats {
+    words: number;
+    chars: number;
+    readingTimeMin: number;
+}
+
+function updateDocStats(stats: DocStats): void {
+    let el = document.getElementById('doc-stats');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'doc-stats';
+        document.getElementById('document-paper')?.prepend(el);
+    }
+    el.textContent = `${stats.readingTimeMin} min read | ${stats.words.toLocaleString()} words | ${stats.chars.toLocaleString()} chars`;
+}
+
+function updatePrintMarginHeight(): void {
+    const paper = document.getElementById('document-paper');
+    if (!paper) { return; }
+    const h = Math.round(paper.clientWidth * 297 / 210);
+    document.documentElement.style.setProperty('--a4-page-h', `${h}px`);
+}
+
+window.addEventListener('resize', () => {
+    if (document.getElementById('document-paper')?.classList.contains('show-print-margins')) {
+        updatePrintMarginHeight();
+    }
+});
+
 function applySettings(settings: {
     headingFont?: string;
     bodyFont?: string;
@@ -136,6 +173,7 @@ function applySettings(settings: {
     showToolbar?: boolean;
     toolbarCollapsed?: boolean;
     showTocSidebar?: boolean;
+    showPrintMargins?: boolean;
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
     scrollSync?: boolean;
 }) {
@@ -198,6 +236,13 @@ function applySettings(settings: {
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.classList.toggle('active', (btn as HTMLElement).dataset.theme === settings.theme);
         });
+    }
+    if (settings.showPrintMargins !== undefined) {
+        const paper = document.getElementById('document-paper');
+        if (paper) {
+            paper.classList.toggle('show-print-margins', settings.showPrintMargins);
+            if (settings.showPrintMargins) { updatePrintMarginHeight(); }
+        }
     }
 }
 

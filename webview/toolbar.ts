@@ -296,6 +296,14 @@ export class Toolbar {
                         payload: { showTocSidebar: isVisible }
                     });
                 }
+
+                if (toggle.dataset.action === 'print-margins') {
+                    const isOn = toggle.classList.contains('on');
+                    this.vscode.postMessage({
+                        type: 'update-settings',
+                        payload: { showPrintMargins: isOn }
+                    });
+                }
             });
         });
     }
@@ -342,6 +350,7 @@ export class Toolbar {
         headingSize?: 'S' | 'M' | 'L';
         toolbarCollapsed?: boolean;
         showTocSidebar?: boolean;
+        showPrintMargins?: boolean;
         theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
         bodyFont?: string;
         lineSpacing?: 'compact' | 'normal' | 'relaxed';
@@ -397,6 +406,14 @@ export class Toolbar {
             const toggle = document.querySelector<HTMLElement>('.set-toggle[data-action="toc-sidebar"]');
             if (toggle) {
                 toggle.classList.toggle('on', settings.showTocSidebar);
+            }
+        }
+
+        // Sync print margins toggle
+        if (settings.showPrintMargins !== undefined) {
+            const toggle = document.querySelector<HTMLElement>('.set-toggle[data-action="print-margins"]');
+            if (toggle) {
+                toggle.classList.toggle('on', settings.showPrintMargins);
             }
         }
 
