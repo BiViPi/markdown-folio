@@ -12,6 +12,7 @@ export interface PreviewSettings {
     showPrintMargins: boolean;
     theme: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
     scrollSync: boolean;
+    chromePath: string;
 }
 
 const DEFAULTS: PreviewSettings = {
@@ -26,6 +27,7 @@ const DEFAULTS: PreviewSettings = {
     showPrintMargins: false,
     theme: 'ivory',
     scrollSync: true,
+    chromePath: '',
 };
 
 export class SettingsManager {
@@ -45,6 +47,7 @@ export class SettingsManager {
             showPrintMargins: cfg.get<boolean>('showPrintMargins', DEFAULTS.showPrintMargins),
             theme: cfg.get<'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github'>('theme', DEFAULTS.theme),
             scrollSync: cfg.get<boolean>('scrollSync', DEFAULTS.scrollSync),
+            chromePath: cfg.get<string>('chromePath', DEFAULTS.chromePath),
         };
     }
 

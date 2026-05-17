@@ -357,6 +357,7 @@ export class PreviewPanel {
                         size,
                         outputPath: saveUri.fsPath,
                         headings: this._lastToc.filter(h => h.level <= 3),
+                        chromePath: settings.chromePath,
                     });
                 }
             );
@@ -463,7 +464,11 @@ export class PreviewPanel {
                 await vscode.window.withProgress(
                     { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting PNG...', cancellable: false },
                     async () => {
-                        await PngExporter.export(pngHtml, { outputPath: saveUri.fsPath, mode: 'full' });
+                        await PngExporter.export(pngHtml, {
+                            outputPath: saveUri.fsPath,
+                            mode: 'full',
+                            chromePath: settings.chromePath,
+                        });
                     }
                 );
                 const open = await vscode.window.showInformationMessage(
@@ -482,7 +487,11 @@ export class PreviewPanel {
                 await vscode.window.withProgress(
                     { location: vscode.ProgressLocation.Notification, title: 'Markdown Folio: Exporting PNG pages...', cancellable: false },
                     async () => {
-                        await PngExporter.export(pngHtml, { outputPath: folderUri.fsPath, mode: 'pages' });
+                        await PngExporter.export(pngHtml, {
+                            outputPath: folderUri.fsPath,
+                            mode: 'pages',
+                            chromePath: settings.chromePath,
+                        });
                     }
                 );
                 const open = await vscode.window.showInformationMessage(
@@ -517,6 +526,7 @@ export class PreviewPanel {
                         title: this._lastTitle,
                         distDir,
                         settings,
+                        chromePath: settings.chromePath,
                     });
                 }
             );

@@ -14,6 +14,7 @@ export interface DocxOptions {
     title?: string;
     distDir: string;
     settings?: PdfSettings;
+    chromePath?: string;
 }
 
 type OmmlMap = Map<number, { omml: string; isDisplay: boolean }>;
@@ -21,7 +22,7 @@ type OmmlMap = Map<number, { omml: string; isDisplay: boolean }>;
 export class DocxExporter {
     static async export(html: string, options: DocxOptions): Promise<void> {
 
-        const { processed, ommlMap } = await DocxExporter._preprocess(html, options.distDir);
+        const { processed, ommlMap } = await DocxExporter._preprocess(html, options.distDir, options.chromePath);
 
         const rawBuffer: Buffer = await HTMLtoDOCX(processed, undefined, {
             title: options.title || 'Document',
@@ -158,10 +159,10 @@ export class DocxExporter {
      * 2. TikZ diagram blocks → PNG images via BrowserRasterizer
      * 3. KaTeX HTML → OMML marker placeholders (synchronous, no Puppeteer)
      */
-    private static async _preprocess(html: string, distDir: string): Promise<{ processed: string; ommlMap: OmmlMap }> {
+    private static async _preprocess(html: string, distDir: string, chromePath?: string): Promise<{ processed: string; ommlMap: OmmlMap }> {
         let processed = html;
-        processed = await DocxExporter.replaceMermaidWithImages(processed, distDir);
-        processed = await DocxExporter.replaceTikzWithImages(processed);
+        processed = await DocxExporter.replaceMermaidWithImages(processed, distDir, chromePath);
+        processed = await DocxExporter.replaceTikzWithImages(processed, chromePath);
         processed = DocxExporter.replaceTikzErrorBlocks(processed);
         const { processed: withMarkers, ommlMap } = DocxExporter._replaceKatexWithOmml(processed);
         return { processed: withMarkers, ommlMap };
@@ -246,13 +247,13 @@ export class DocxExporter {
      * Render each Mermaid diagram to PNG via BrowserRasterizer, replace code block with <img>.
      * Falls back to text placeholder if Chrome is not available.
      */
-    static async replaceMermaidWithImages(html: string, distDir: string): Promise<string> {
+    static async replaceMermaidWithImages(html: string, distDir: string, chromePathSetting?: string): Promise<string> {
         const sources = DocxExporter._extractMermaidSources(html);
         if (sources.length === 0) { return html; }
 
         let chromePath: string;
         try {
-            chromePath = PdfExporter.findChromePath();
+            chromePath = PdfExporter.findChromePath(chromePathSetting);
         } catch {
             return DocxExporter._mermaidFallback(html);
         }
@@ -306,13 +307,13 @@ export class DocxExporter {
      * TikZ is already resolved to inline SVG by the time DOCX export runs.
      * Falls back to a text placeholder if Chrome is not available.
      */
-    static async replaceTikzWithImages(html: string): Promise<string> {
+    static async replaceTikzWithImages(html: string, chromePathSetting?: string): Promise<string> {
         const blocks = DocxExporter._extractTikzBlocks(html);
         if (blocks.length === 0) { return html; }
 
         let chromePath: string;
         try {
-            chromePath = PdfExporter.findChromePath();
+            chromePath = PdfExporter.findChromePath(chromePathSetting);
         } catch {
             return DocxExporter._tikzFallback(html);
         }

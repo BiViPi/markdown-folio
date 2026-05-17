@@ -2,7 +2,7 @@
   "name": "markdown-folio",
   "displayName": "Markdown Folio",
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX, Mermaid, TikZ, and custom typography.",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "icon": "images/icon.png",
   "publisher": "BiViPi",
   "engines": {
@@ -115,6 +115,11 @@
     "configuration": {
       "title": "Markdown Folio",
       "properties": {
+        "markdownFolio.chromePath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to Google Chrome or Chromium executable. Leave blank to auto-detect."
+        },
         "markdownFolio.headingFont": {
           "type": "string",
           "default": "'Merriweather', Georgia, serif",

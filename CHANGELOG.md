@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1] - 2026-05-17
+
+### Added
+- New `markdownFolio.chromePath` configuration allowing custom executable paths for Google Chrome or Chromium.
+
+### Changed
+- Automatic Chrome detection now actively scans the user-level `/Applications` folder on macOS to support non-admin installations.
+
 ## [1.4.0] - 2026-05-13
 
 ### Added

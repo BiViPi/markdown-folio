@@ -9,6 +9,7 @@ export interface PdfOptions {
     size: 'A4' | 'A3' | 'Letter';
     outputPath: string;
     headings?: { text: string; level: number }[];
+    chromePath?: string;
 }
 
 interface HeadingPosition {
@@ -21,7 +22,11 @@ export class PdfExporter {
     /**
      * Tìm Chrome/Chromium executable path từ các vị trí phổ biến.
      */
-    static findChromePath(): string {
+    static findChromePath(customPath?: string): string {
+        if (customPath && fs.existsSync(customPath)) {
+            return customPath;
+        }
+
         const candidates: string[] = [];
         const platform = process.platform;
 
@@ -39,6 +44,7 @@ export class PdfExporter {
                 '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
                 '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
                 '/Applications/Chromium.app/Contents/MacOS/Chromium',
+                path.join(os.homedir(), 'Applications', 'Google Chrome.app', 'Contents', 'MacOS', 'Google Chrome'),
             );
         } else {
             candidates.push(
@@ -61,7 +67,7 @@ export class PdfExporter {
     }
 
     static async export(html: string, options: PdfOptions): Promise<void> {
-        const chromePath = PdfExporter.findChromePath();
+        const chromePath = PdfExporter.findChromePath(options.chromePath);
 
         const tmpFile = path.join(os.tmpdir(), `mf-export-${Date.now()}.html`);
         fs.writeFileSync(tmpFile, html, 'utf-8');

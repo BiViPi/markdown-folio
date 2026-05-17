@@ -10,6 +10,7 @@ export interface PngOptions {
     pageWidthPx?: number;
     pageHeightPx?: number;
     deviceScaleFactor?: number;
+    chromePath?: string;
 }
 
 interface ScreenshotClip {
@@ -21,7 +22,7 @@ interface ScreenshotClip {
 
 export class PngExporter {
     static async export(html: string, options: PngOptions): Promise<void> {
-        const chromePath = PdfExporter.findChromePath();
+        const chromePath = PdfExporter.findChromePath(options.chromePath);
 
         const pageW = options.pageWidthPx ?? 1280;
         const pageH = options.pageHeightPx ?? 1600;
