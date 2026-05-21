@@ -60,18 +60,59 @@ fs.copyFileSync(sourceDocumentCss, path.join(distDir, 'document.css'));
 fs.copyFileSync(sourceToolbarCss, path.join(distDir, 'toolbar.css'));
 fs.copyFileSync(sourceSidebarCss, path.join(distDir, 'sidebar.css'));
 
-// Copy node-tikzjax runtime assets for shaded TikZ rendering
-const tikzJaxRoot = path.join(root, 'node_modules', 'node-tikzjax');
-const tikzJaxDist = path.join(tikzJaxRoot, 'dist');
-const tikzJaxTex = path.join(tikzJaxRoot, 'tex');
-const tikzJaxCss = path.join(tikzJaxRoot, 'css');
+function readPackageJson(packageRoot) {
+    return JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+}
+
+function packageNameToPath(nodeModulesRoot, packageName) {
+    return path.join(nodeModulesRoot, ...packageName.split('/'));
+}
+
+function copyPackageDirectory(sourceDir, targetDir) {
+    fs.cpSync(sourceDir, targetDir, {
+        recursive: true,
+        force: true
+    });
+}
+
+function copyRuntimeDependencyTree(packageName, sourceNodeModulesRoot, targetNodeModulesRoot, seen = new Set()) {
+    if (seen.has(packageName)) {
+        return;
+    }
+    seen.add(packageName);
+
+    const sourcePackageDir = packageNameToPath(sourceNodeModulesRoot, packageName);
+    if (!fs.existsSync(sourcePackageDir)) {
+        throw new Error(`Missing runtime dependency package: ${packageName}`);
+    }
+
+    const targetPackageDir = packageNameToPath(targetNodeModulesRoot, packageName);
+    fs.mkdirSync(path.dirname(targetPackageDir), { recursive: true });
+    copyPackageDirectory(sourcePackageDir, targetPackageDir);
+
+    const pkg = readPackageJson(sourcePackageDir);
+    for (const dependencyName of Object.keys(pkg.dependencies || {})) {
+        copyRuntimeDependencyTree(dependencyName, sourceNodeModulesRoot, targetNodeModulesRoot, seen);
+    }
+}
+
+// Copy node-tikzjax runtime assets and its runtime dependency tree for shaded TikZ rendering.
+const sourceNodeModulesRoot = path.join(root, 'node_modules');
+const tikzJaxRoot = path.join(sourceNodeModulesRoot, 'node-tikzjax');
 const tikzJaxTargetRoot = path.join(distDir, 'vendor', 'node-tikzjax');
 if (fs.existsSync(tikzJaxRoot)) {
     fs.rmSync(tikzJaxTargetRoot, { recursive: true, force: true });
     fs.mkdirSync(tikzJaxTargetRoot, { recursive: true });
-    fs.cpSync(tikzJaxDist, path.join(tikzJaxTargetRoot, 'dist'), { recursive: true, force: true });
-    fs.cpSync(tikzJaxTex, path.join(tikzJaxTargetRoot, 'tex'), { recursive: true, force: true });
-    fs.cpSync(tikzJaxCss, path.join(tikzJaxTargetRoot, 'css'), { recursive: true, force: true });
+    copyPackageDirectory(tikzJaxRoot, tikzJaxTargetRoot);
+
+    const tikzJaxNodeModulesTarget = path.join(tikzJaxTargetRoot, 'node_modules');
+    fs.mkdirSync(tikzJaxNodeModulesTarget, { recursive: true });
+
+    const tikzJaxPkg = readPackageJson(tikzJaxRoot);
+    const seenDependencies = new Set();
+    for (const dependencyName of Object.keys(tikzJaxPkg.dependencies || {})) {
+        copyRuntimeDependencyTree(dependencyName, sourceNodeModulesRoot, tikzJaxNodeModulesTarget, seenDependencies);
+    }
 }
 
 console.log('Copied KaTeX assets, mermaid.min.js, DM fonts, Merriweather, node-tikzjax runtime assets, document.pdf.css, and webview CSS to dist/');

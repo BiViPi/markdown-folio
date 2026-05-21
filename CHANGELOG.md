@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.1] - 2026-05-21
+
+### Fixed
+- Bundled the full `node-tikzjax` runtime dependency tree inside the packaged extension so shaded TikZ diagrams render correctly after installing the VSIX from VS Code or Open VSX.
+
 ## [1.5.0] - 2026-05-21
 
 ### Added
