@@ -6,6 +6,11 @@
     --line-height-body: 1.72;
     --zoom-scale: 1;
     --heading-scale: 1;
+    --alert-note-color: #0f766e;
+    --alert-tip-color: #2563eb;
+    --alert-important-color: #7c3aed;
+    --alert-warning-color: #d97706;
+    --alert-caution-color: #dc2626;
 }
 
 body.admiral-mode {

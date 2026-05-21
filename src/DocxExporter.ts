@@ -162,7 +162,7 @@ export class DocxExporter {
     private static async _preprocess(html: string, distDir: string, chromePath?: string): Promise<{ processed: string; ommlMap: OmmlMap }> {
         let processed = html;
         processed = await DocxExporter.replaceMermaidWithImages(processed, distDir, chromePath);
-        processed = await DocxExporter.replaceTikzWithImages(processed, chromePath);
+        processed = await DocxExporter.replaceTikzWithImages(processed, distDir, chromePath);
         processed = DocxExporter.replaceTikzErrorBlocks(processed);
         const { processed: withMarkers, ommlMap } = DocxExporter._replaceKatexWithOmml(processed);
         return { processed: withMarkers, ommlMap };
@@ -307,7 +307,7 @@ export class DocxExporter {
      * TikZ is already resolved to inline SVG by the time DOCX export runs.
      * Falls back to a text placeholder if Chrome is not available.
      */
-    static async replaceTikzWithImages(html: string, chromePathSetting?: string): Promise<string> {
+    static async replaceTikzWithImages(html: string, distDir: string, chromePathSetting?: string): Promise<string> {
         const blocks = DocxExporter._extractTikzBlocks(html);
         if (blocks.length === 0) { return html; }
 
@@ -318,12 +318,14 @@ export class DocxExporter {
             return DocxExporter._tikzFallback(html);
         }
 
+        const tikzJaxFontCss = DocxExporter._readTikzJaxFontCss(distDir);
+
         // Each job wraps the raw SVG in a minimal white-background HTML page.
         const jobs: RasterizeJob[] = blocks.map(b => ({
             html: `<!DOCTYPE html><html><head><style>
                 html, body { margin: 0; padding: 0; background: white; display: inline-block; }
                 svg { display: block; }
-            </style></head><body>${b.svg}</body></html>`,
+            </style>${tikzJaxFontCss ? `<style>${tikzJaxFontCss}</style>` : ''}</head><body>${b.svg}</body></html>`,
             selector: 'svg',
         }));
 
@@ -468,5 +470,21 @@ export class DocxExporter {
         }
 
         return blocks;
+    }
+
+    private static _readTikzJaxFontCss(distDir: string): string {
+        const cssPath = path.join(distDir, 'vendor', 'node-tikzjax', 'css', 'fonts.css');
+        if (!fs.existsSync(cssPath)) {
+            return '';
+        }
+
+        let css = fs.readFileSync(cssPath, 'utf-8');
+        css = css.replace(/url\((['"]?)(bakoma\/ttf\/[^'")]+)\1\)/g, (_match, _quote, relativePath) => {
+            const fontPath = path.join(path.dirname(cssPath), relativePath);
+            if (!fs.existsSync(fontPath)) { return _match; }
+            const b64 = fs.readFileSync(fontPath).toString('base64');
+            return `url('data:font/ttf;base64,${b64}')`;
+        });
+        return css;
     }
 }

@@ -23,6 +23,9 @@
 **Dracula Theme**
 ![Dracula](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/dracula.png)
 
+**GitHub Alerts + TikZ**
+![GitHub Alerts and TikZ](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/github-alerts-tikz.png)
+
 ---
 
 ## Features
@@ -33,11 +36,13 @@
 ### Rendering
 - **Công thức toán học** — Hỗ trợ đầy đủ KaTeX cho công thức inline `$...$` và display `$$...$$`, đồng thời render native vào Word
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph và nhiều loại sơ đồ khác
-- **TikZ Diagrams** — Hỗ trợ hình học và technical diagrams bằng local LaTeX toolchain, export được sang HTML, PDF, PNG và DOCX image fallback
+- **TikZ Diagrams** — Hỗ trợ hình học và technical diagrams bằng local LaTeX toolchain, với hybrid shaded-diagram support và export sang HTML, PDF, PNG, kèm DOCX image fallback
+- **GitHub Alerts** — Hỗ trợ native cho blockquote alerts kiểu GitHub: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`, có icon và màu nhấn riêng
 
 ### Appearance
 - **6 theme chuyên nghiệp** — Ivory, Admiral, Serene, Cyberpunk, Dracula và GitHub
 - **Typography** — Tùy chỉnh font heading/body, cỡ chữ, heading scale, line spacing và page width
+- **Custom Stylesheet** — Áp một file CSS local sau built-in styles cho preview, HTML export và PDF export
 - **Table of Contents** — Sidebar mục lục tự động sinh, bấm để điều hướng
 
 ### Workflow
@@ -59,6 +64,33 @@
 
 ---
 
+## Custom Stylesheet
+
+Dùng `markdownFolio.customStyleSheet` để trỏ Markdown Folio tới một file CSS local. Stylesheet này sẽ được áp sau built-in styles trong preview, HTML export và PDF export.
+
+Lưu ý:
+
+- Relative path được resolve từ workspace folder đầu tiên.
+- Preview sẽ tự reload khi file stylesheet thay đổi trên disk.
+- `DOCX` không đảm bảo CSS parity.
+
+## GitHub Alerts
+
+Markdown Folio hỗ trợ blockquote alerts kiểu GitHub:
+
+```md
+> [!NOTE]
+> Helpful information for the reader.
+```
+
+Các loại alert được hỗ trợ:
+
+- `NOTE`
+- `TIP`
+- `IMPORTANT`
+- `WARNING`
+- `CAUTION`
+
 ## Settings
 
 | Setting | Default | Description |
@@ -66,6 +98,7 @@
 | `markdownFolio.theme` | `ivory` | Theme preview (ivory, admiral, serene, cyberpunk, dracula, github) |
 | `markdownFolio.headingFont` | Merriweather | Font family cho heading |
 | `markdownFolio.bodyFont` | DM Sans | Font family cho body text |
+| `markdownFolio.customStyleSheet` | `""` | Path tới file CSS custom được áp sau built-in preview, HTML export và PDF export styles |
 | `markdownFolio.fontSize` | `16` | Cỡ chữ theo pixel |
 | `markdownFolio.headingSize` | `M` | Tỷ lệ heading: S / M / L |
 | `markdownFolio.lineSpacing` | `normal` | Giãn dòng: compact / normal / relaxed |

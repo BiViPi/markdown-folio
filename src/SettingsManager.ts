@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 export interface PreviewSettings {
     headingFont: string;
     bodyFont: string;
+    customStyleSheet: string;
     fontSize: number;
     headingSize: 'S' | 'M' | 'L';
     lineSpacing: 'compact' | 'normal' | 'relaxed';
@@ -18,6 +19,7 @@ export interface PreviewSettings {
 const DEFAULTS: PreviewSettings = {
     headingFont: "'Merriweather', Georgia, serif",
     bodyFont: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
+    customStyleSheet: '',
     fontSize: 16,
     headingSize: 'M',
     lineSpacing: 'normal',
@@ -38,6 +40,7 @@ export class SettingsManager {
         return {
             headingFont: cfg.get<string>('headingFont', DEFAULTS.headingFont),
             bodyFont: cfg.get<string>('bodyFont', DEFAULTS.bodyFont),
+            customStyleSheet: cfg.get<string>('customStyleSheet', DEFAULTS.customStyleSheet),
             fontSize: cfg.get<number>('fontSize', DEFAULTS.fontSize),
             headingSize: cfg.get<'S' | 'M' | 'L'>('headingSize', DEFAULTS.headingSize),
             lineSpacing: cfg.get<'compact' | 'normal' | 'relaxed'>('lineSpacing', DEFAULTS.lineSpacing),

@@ -10,6 +10,14 @@ const SOURCE_LINE_TARGETS = new Set([
     'blockquote_open', 'table_open', 'fence', 'hr', 'html_block'
 ]);
 
+const ALERT_TITLES: Record<string, string> = {
+    NOTE: 'Note',
+    TIP: 'Tip',
+    IMPORTANT: 'Important',
+    WARNING: 'Warning',
+    CAUTION: 'Caution',
+};
+
 export class MarkdownEngine {
     private md: MarkdownIt;
 
@@ -44,6 +52,64 @@ export class MarkdownEngine {
             })
             .use(markdownItToc, { containerClass: 'auto-toc', listType: 'ul' })
             .use(markdownItKatex);
+
+        this.md.core.ruler.after('block', 'markdown_folio_alerts', state => {
+            const tokens = state.tokens;
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
+                if (token.type !== 'blockquote_open' || token.level !== 0) {
+                    continue;
+                }
+                if (tokens[i + 1]?.type !== 'paragraph_open' || tokens[i + 2]?.type !== 'inline' || tokens[i + 3]?.type !== 'paragraph_close') {
+                    continue;
+                }
+
+                const inline = tokens[i + 2];
+                const match = /^\[!([A-Z]+)\](?:\n|$)/.exec(inline.content);
+                if (!match) {
+                    continue;
+                }
+
+                const alertType = match[1];
+                const alertTitle = ALERT_TITLES[alertType];
+                if (!alertTitle) {
+                    continue;
+                }
+
+                token.attrJoin('class', `markdown-alert markdown-alert-${alertType.toLowerCase()}`);
+
+                let content = inline.content.slice(match[0].length);
+                if (content.startsWith('\n')) {
+                    content = content.slice(1);
+                }
+                inline.content = content;
+
+                if (inline.children) {
+                    const children = [...inline.children];
+                    if (children[0]?.type === 'text' && children[0].content === `[!${alertType}]`) {
+                        children.shift();
+                    }
+                    if (children[0]?.type === 'softbreak') {
+                        children.shift();
+                    }
+                    inline.children = children;
+                }
+
+                const titleOpen = new state.Token('paragraph_open', 'p', 1);
+                titleOpen.attrJoin('class', 'markdown-alert-title');
+                const titleInline = new state.Token('inline', '', 0);
+                titleInline.content = '';
+                const titleText = new state.Token('text', '', 0);
+                titleText.content = alertTitle;
+                titleInline.children = [titleText];
+                const titleClose = new state.Token('paragraph_close', 'p', -1);
+                tokens.splice(i + 1, 0, titleOpen, titleInline, titleClose);
+
+                if (!inline.content.trim()) {
+                    tokens.splice(i + 4, 3);
+                }
+            }
+        });
 
         this.md.renderer.rules.code_inline = (tokens, idx) => {
             return `<code class="hljs code-inline">${this.highlightQuotedStrings(tokens[idx].content)}</code>`;

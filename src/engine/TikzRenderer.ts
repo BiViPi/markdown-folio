@@ -2,11 +2,15 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import { execFile } from 'child_process';
+import { transformTikzSvgColors } from './TikzSvgColorTransform';
 
 export type TikzRenderResult =
-    | { ok: true; svg: string }
+    | { ok: true; svg: string; backend: TikzBackend }
     | { ok: false; error: string };
+
+type TikzBackend = 'standard' | 'shaded';
 
 // ── Rejected commands (D15 + D14) ─────────────────────────────────────────
 // These must not reach pdflatex. Checked before any subprocess is spawned.
@@ -20,6 +24,22 @@ const REJECTED_COMMANDS = [
 
 // ── Default TikZ library set included in every generated preamble (D13) ───
 const DEFAULT_LIBRARIES = 'calc,arrows.meta,shapes,positioning,decorations.pathmorphing';
+const SHADED_BACKEND_PATTERNS = [
+    /\\shade\b/,
+    /\\shadedraw\b/,
+    /\bleft color\s*=/,
+    /\bright color\s*=/,
+    /\btop color\s*=/,
+    /\bbottom color\s*=/,
+    /\binner color\s*=/,
+    /\bouter color\s*=/,
+    /\bmiddle color\s*=/,
+    /\bball color\s*=/,
+    /\bshading\s*=/,
+    /\\pgfdeclarehorizontalshading\b/,
+    /\\pgfdeclareverticalshading\b/,
+    /\\pgfdeclareradialshading\b/,
+];
 
 // ── Serial async queue ─────────────────────────────────────────────────────
 // One active pdflatex subprocess at a time per extension instance.
@@ -50,12 +70,17 @@ async function _drain(): Promise<void> {
 // ── Cache ─────────────────────────────────────────────────────────────────
 const _cache = new Map<string, TikzRenderResult>();
 
-function _cacheKey(source: string): string {
-    return crypto.createHash('sha256').update(source).digest('hex');
+function _cacheKey(backend: TikzBackend, source: string): string {
+    return crypto.createHash('sha256').update(`${backend}:${source}`).digest('hex');
 }
 
 // ── Availability ──────────────────────────────────────────────────────────
 let _available: boolean | null = null;
+let _tikzJaxImportPromise: Promise<TikzJaxModule> | null = null;
+
+interface TikzJaxModule {
+    tex2svg: (input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string>;
+}
 
 function _checkBinary(cmd: string): Promise<boolean> {
     return new Promise(resolve => {
@@ -150,12 +175,15 @@ export class TikzRenderer {
      */
     static async render(source: string): Promise<TikzRenderResult> {
         const normalized = source.replace(/\r\n/g, '\n').trimEnd();
-        const key = _cacheKey(normalized);
+        const backend = _selectBackend(normalized);
+        const key = _cacheKey(backend, normalized);
 
         const cached = _cache.get(key);
         if (cached) { return cached; }
 
-        const result = await enqueue(() => TikzRenderer._renderWithLatex(normalized));
+        const result = await enqueue(() => backend === 'shaded'
+            ? TikzRenderer._renderWithTikzJax(normalized)
+            : TikzRenderer._renderWithLatex(normalized));
         _cache.set(key, result);
         return result;
     }
@@ -164,7 +192,7 @@ export class TikzRenderer {
      * Synchronous pass: replace tikz-pending divs that are already in cache.
      * Does not spawn any subprocess. Returns the HTML immediately.
      */
-    static resolveCacheHits(html: string): string {
+    static resolveCacheHits(html: string, darkMode = false): string {
         return html.replace(
             /<div class="tikz-pending" data-tikz="([^"]*)"[^>]*><\/div>/g,
             (_match, b64, offset, str, groups) => {
@@ -172,10 +200,11 @@ export class TikzRenderer {
                 const sourceLine = _extractSourceLine(attrs);
                 let source: string;
                 try { source = Buffer.from(b64, 'base64url').toString('utf-8'); } catch { return _errorHtml('Failed to decode TikZ source.', sourceLine); }
-                const key = _cacheKey(source.replace(/\r\n/g, '\n').trimEnd());
+                const normalized = source.replace(/\r\n/g, '\n').trimEnd();
+                const key = _cacheKey(_selectBackend(normalized), normalized);
                 const cached = _cache.get(key);
                 if (!cached) { return _loadingHtml(sourceLine); }
-                return _resultToHtml(cached, sourceLine);
+                return _resultToHtml(cached, sourceLine, darkMode);
             }
         );
     }
@@ -184,7 +213,7 @@ export class TikzRenderer {
      * Async pass: render all remaining tikz-pending divs (cache misses).
      * Returns fully resolved HTML. Processes blocks serially.
      */
-    static async resolveAll(html: string): Promise<string> {
+    static async resolveAll(html: string, darkMode = false): Promise<string> {
         // Collect all pending blocks first so we can process them.
         const pendingRegex = /<div class="tikz-pending" data-tikz="([^"]*)"([^>]*)><\/div>/g;
         const blocks: Array<{ full: string; b64: string; attrs: string }> = [];
@@ -207,7 +236,7 @@ export class TikzRenderer {
             }
 
             const result = await TikzRenderer.render(source);
-            resolved = resolved.replace(block.full, _resultToHtml(result, sourceLine));
+            resolved = resolved.replace(block.full, _resultToHtml(result, sourceLine, darkMode));
         }
 
         return resolved;
@@ -233,8 +262,9 @@ export class TikzRenderer {
 
     /** Internal: spawn pdflatex + dvisvgm in an isolated temp directory. */
     private static async _renderWithLatex(source: string): Promise<TikzRenderResult> {
-        const texResult = TikzRenderer._buildTexFile(source);
-        if (!texResult.ok) { return texResult; }
+        const parsed = TikzRenderer._parseSource(source);
+        if (!parsed.ok) { return parsed; }
+        const tex = TikzRenderer._buildStandardTex(parsed.body, parsed.userLibLines);
 
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mf-tikz-'));
         const texFile = path.join(tmpDir, 'diagram.tex');
@@ -242,7 +272,7 @@ export class TikzRenderer {
         const svgFile = path.join(tmpDir, 'diagram.svg');
 
         try {
-            fs.writeFileSync(texFile, texResult.tex, 'utf-8');
+            fs.writeFileSync(texFile, tex, 'utf-8');
 
             // Step 1: pdflatex → DVI
             const latexResult = await _spawnWithTimeout(
@@ -251,7 +281,7 @@ export class TikzRenderer {
                 { cwd: tmpDir, timeout: 30_000 }
             );
             if (!latexResult.ok) {
-                const excerpt = _stderrExcerpt(latexResult.stderr, latexResult.stdout);
+                const excerpt = _stderrExcerpt(latexResult.stderr, latexResult.stdout, latexResult.errorMessage);
                 return { ok: false, error: excerpt };
             }
 
@@ -277,11 +307,35 @@ export class TikzRenderer {
             // Strip XML declaration — makes it safe to inline in HTML.
             svg = svg.replace(/<\?xml[^?]*\?>\s*/i, '').trim();
 
-            return { ok: true, svg };
+            return { ok: true, svg, backend: 'standard' };
 
         } finally {
             // Best-effort cleanup — never throw from finally.
             try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+        }
+    }
+
+    private static async _renderWithTikzJax(source: string): Promise<TikzRenderResult> {
+        const parsed = TikzRenderer._parseSource(source);
+        if (!parsed.ok) { return parsed; }
+
+        try {
+            const tikzJax = await _loadTikzJaxModule();
+            const svg = await tikzJax.tex2svg(
+                `\\begin{document}\n${parsed.bodyBlock}\n\\end{document}`,
+                {
+                    showConsole: false,
+                    tikzLibraries: _mergeTikzLibraries(parsed.userLibLines)
+                }
+            );
+            return {
+                ok: true,
+                svg: svg.trim(),
+                backend: 'shaded'
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return { ok: false, error: `node-tikzjax failed: ${message}` };
         }
     }
 }
@@ -297,9 +351,12 @@ function _sourceLineAttr(line: string): string {
     return line ? `data-source-line="${line}"` : '';
 }
 
-function _resultToHtml(result: TikzRenderResult, sourceLine: string): string {
+function _resultToHtml(result: TikzRenderResult, sourceLine: string, darkMode: boolean): string {
     if (result.ok) {
-        return `<div class="tikz-diagram" ${_sourceLineAttr(sourceLine)}>${result.svg}</div>`;
+        const svg = result.backend === 'shaded'
+            ? transformTikzSvgColors(result.svg, darkMode)
+            : result.svg;
+        return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}>${svg}</div>`;
     }
     return _errorHtml(result.error, sourceLine);
 }
@@ -319,7 +376,7 @@ function _loadingHtml(sourceLine: string): string {
     return `<div class="tikz-loading" ${_sourceLineAttr(sourceLine)}>Rendering TikZ…</div>`;
 }
 
-function _stderrExcerpt(stderr: string, stdout: string): string {
+function _stderrExcerpt(stderr: string, stdout: string, errorMessage?: string): string {
     // pdflatex writes errors to stdout (not stderr).
     // Extract lines starting with '!' which are LaTeX error lines.
     const combined = (stdout + '\n' + stderr).split('\n');
@@ -327,13 +384,14 @@ function _stderrExcerpt(stderr: string, stdout: string): string {
         .filter(l => l.startsWith('!') || l.startsWith('l.'))
         .slice(0, 8)
         .join('\n');
-    return errorLines || stderr.slice(0, 400) || 'pdflatex exited with an error.';
+    return errorLines || stderr.slice(0, 400) || errorMessage || 'pdflatex exited with an error.';
 }
 
 interface SpawnResult {
     ok: boolean;
     stdout: string;
     stderr: string;
+    errorMessage?: string;
 }
 
 function _spawnWithTimeout(
@@ -344,11 +402,135 @@ function _spawnWithTimeout(
     return new Promise(resolve => {
         const child = execFile(cmd, args, { cwd: opts.cwd, timeout: opts.timeout }, (err, stdout, stderr) => {
             if (err) {
-                resolve({ ok: false, stdout: stdout ?? '', stderr: stderr ?? '' });
+                resolve({ ok: false, stdout: stdout ?? '', stderr: stderr ?? '', errorMessage: err.message });
             } else {
                 resolve({ ok: true, stdout: stdout ?? '', stderr: stderr ?? '' });
             }
         });
         void child; // used only for side effects via the callback
     });
+}
+
+function _selectBackend(source: string): TikzBackend {
+    return SHADED_BACKEND_PATTERNS.some(pattern => pattern.test(source)) ? 'shaded' : 'standard';
+}
+
+function _mergeTikzLibraries(userLibLines: string[]): string {
+    const libs = new Set<string>();
+    for (const part of DEFAULT_LIBRARIES.split(',')) {
+        const trimmed = part.trim();
+        if (trimmed) { libs.add(trimmed); }
+    }
+    for (const line of userLibLines) {
+        const match = line.match(/^\\usetikzlibrary\s*\{([^}]+)\}/);
+        if (!match) { continue; }
+        for (const name of match[1].split(',')) {
+            const trimmed = name.trim();
+            if (trimmed) { libs.add(trimmed); }
+        }
+    }
+    return Array.from(libs).join(',');
+}
+
+async function _loadTikzJaxModule(): Promise<TikzJaxModule> {
+    if (_tikzJaxImportPromise) {
+        return _tikzJaxImportPromise;
+    }
+
+    _tikzJaxImportPromise = (async () => {
+        const modulePath = path.join(__dirname, 'vendor', 'node-tikzjax', 'dist', 'index.js');
+        if (!fs.existsSync(modulePath)) {
+            throw new Error('Bundled node-tikzjax runtime was not found in dist/vendor/node-tikzjax.');
+        }
+
+        const imported = await import(pathToFileURL(modulePath).href) as {
+            default?: unknown;
+        };
+
+        const candidate = imported.default as
+            | ((input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string>)
+            | { default?: (input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string> };
+
+        const tex2svg = typeof candidate === 'function'
+            ? candidate
+            : typeof candidate?.default === 'function'
+                ? candidate.default
+                : undefined;
+
+        if (!tex2svg) {
+            throw new Error('Bundled node-tikzjax module does not export a usable tex2svg function.');
+        }
+
+        return { tex2svg };
+    })();
+
+    return _tikzJaxImportPromise;
+}
+
+interface ParsedTikzSource {
+    ok: true;
+    body: string;
+    bodyBlock: string;
+    userLibLines: string[];
+}
+
+function _buildParsedSourceResultError(error: string): { ok: false; error: string } {
+    return { ok: false, error };
+}
+
+namespace TikzRenderer {
+    export function _parseSource(source: string): ParsedTikzSource | { ok: false; error: string } {
+        for (const pattern of REJECTED_COMMANDS) {
+            if (pattern.test(source)) {
+                const matched = source.match(pattern)?.[0] ?? '';
+                if (/\\usepackage/.test(matched)) {
+                    return _buildParsedSourceResultError('\\usepackage{} is not supported in fenced tikz blocks.\nUse \\usetikzlibrary{} to load TikZ libraries.');
+                }
+                if (/\\begin\s*\{document\}/.test(matched)) {
+                    return _buildParsedSourceResultError('Full LaTeX document syntax (\\begin{document}) is not supported.\nWrite only TikZ body content or a \\begin{tikzpicture}...\\end{tikzpicture} block.');
+                }
+                return _buildParsedSourceResultError(`${matched.trim()} is not supported in fenced tikz blocks.\nExternal file references are disabled for security.`);
+            }
+        }
+
+        const lines = source.split('\n');
+        const userLibLines: string[] = [];
+        let bodyStartIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (trimmed === '') { bodyStartIndex = i + 1; continue; }
+            if (/^\\usetikzlibrary\s*\{/.test(trimmed)) {
+                userLibLines.push(trimmed);
+                bodyStartIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+        const body = lines.slice(bodyStartIndex).join('\n').trim();
+        const hasEnvironment = /\\begin\s*\{tikzpicture\}/.test(body);
+        const bodyBlock = hasEnvironment
+            ? body
+            : `\\begin{tikzpicture}\n${body}\n\\end{tikzpicture}`;
+
+        return { ok: true, body, bodyBlock, userLibLines };
+    }
+
+    export function _buildStandardTex(body: string, userLibLines: string[]): string {
+        const hasEnvironment = /\\begin\s*\{tikzpicture\}/.test(body);
+        const bodyBlock = hasEnvironment
+            ? body
+            : `\\begin{tikzpicture}\n${body}\n\\end{tikzpicture}`;
+        const userLibSection = userLibLines.length > 0
+            ? userLibLines.join('\n') + '\n'
+            : '';
+
+        return [
+            `\\documentclass[tikz,border=4pt]{standalone}`,
+            `\\usetikzlibrary{${DEFAULT_LIBRARIES}}`,
+            userLibSection.trimEnd(),
+            `\\begin{document}`,
+            bodyBlock,
+            `\\end{document}`,
+        ].filter(l => l !== '').join('\n') + '\n';
+    }
 }

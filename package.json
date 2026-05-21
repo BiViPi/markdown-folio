@@ -2,7 +2,7 @@
   "name": "markdown-folio",
   "displayName": "Markdown Folio",
   "description": "Beautiful Markdown preview with PDF, DOCX, HTML and PNG export. Supports KaTeX, Mermaid, TikZ, and custom typography.",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "icon": "images/icon.png",
   "publisher": "BiViPi",
   "engines": {
@@ -129,6 +129,11 @@
           "type": "string",
           "default": "'DM Sans', 'Segoe UI', system-ui, sans-serif",
           "description": "Font family for body text. Use any font installed on your system, e.g. 'Georgia, serif'."
+        },
+        "markdownFolio.customStyleSheet": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a custom CSS file applied after Markdown Folio's built-in styles in preview, HTML export, and PDF export."
         },
         "markdownFolio.fontSize": {
           "type": "integer",
@@ -279,6 +284,7 @@
     "markdown-it-anchor": "^8.6.7",
     "markdown-it-toc-done-right": "^4.2.0",
     "mermaid": "^11.0.0",
+    "node-tikzjax": "^1.0.5",
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^22.0.0"
   }

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.0] - 2026-05-21
+
+### Added
+- New `markdownFolio.customStyleSheet` setting to apply a user CSS file to preview, HTML export, and PDF export.
+- GitHub-style alerts for `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
+- Alert icons and GitHub-like default alert accents in preview and PDF export.
+
+### Changed
+- Preview now reloads custom CSS when the configured stylesheet file changes on disk.
+- Shaded TikZ blocks now use a hybrid backend so gradient-heavy diagrams can render correctly without changing the standard TikZ pipeline.
+
+### Fixed
+- TikZ SVG output now preserves authored colors in dark themes instead of applying blanket inversion.
+- Shaded TikZ spectrum/gradient output now renders correctly in preview, HTML, PDF, PNG, and DOCX export paths.
+- HTML, PDF, and PNG exports now share custom stylesheet overrides with preview more consistently.
+- GitHub alert titles no longer duplicate their labels during markdown rendering.
+- PDF code block styling now stays closer to the preview theme instead of falling back to mismatched colors.
+
 ## [1.4.1] - 2026-05-17
 
 ### Added

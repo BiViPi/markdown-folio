@@ -13,6 +13,7 @@ import { PngExporter } from './PngExporter';
 import { DocxExporter } from './DocxExporter';
 import { TikzRenderer } from './engine/TikzRenderer';
 import { DocumentStats, type DocumentStats as DocumentStatsType } from './engine/DocumentStats';
+import { CustomStyleSheet } from './CustomStyleSheet';
 
 export class PreviewPanel {
     private static readonly _toolbarCollapsedStateKey = 'markdownFolio.toolbarCollapsed';
@@ -36,6 +37,8 @@ export class PreviewPanel {
     private _suppressForwardScrollUntil = 0;
     private _toolbarCollapsed: boolean;
     private _tikzReadyWaiters: Array<() => void> = [];
+    private _customStyleWatcher: vscode.FileSystemWatcher | undefined;
+    private _customStyleWarningKey = '';
     // Generation counter for TikZ async render guard (D6).
     // Incremented every _update() call; async results are discarded if stale.
     private _renderGeneration = 0;
@@ -237,14 +240,14 @@ export class PreviewPanel {
         // Listen for VS Code settings changes → push to webview immediately
         this._disposables.push(
             SettingsManager.onDidChange(settings => {
+                this._refreshCustomStyleWatcher(settings);
+                this._hasPendingRender = true;
                 if (this._panel.visible) {
-                    this._panel.webview.postMessage({
-                        type: 'settings-updated',
-                        payload: settings
-                    });
+                    this._update();
                 }
             })
         );
+        this._refreshCustomStyleWatcher(SettingsManager.read());
     }
 
     public dispose() {
@@ -255,6 +258,8 @@ export class PreviewPanel {
             clearTimeout(this._scrollThrottleTimer);
             this._scrollThrottleTimer = null;
         }
+        this._customStyleWatcher?.dispose();
+        this._customStyleWatcher = undefined;
         this._panel.dispose();
 
         while (this._disposables.length) {
@@ -338,10 +343,12 @@ export class PreviewPanel {
 
             const distDir = path.join(this._extensionUri.fsPath, 'dist');
             const settings = SettingsManager.read();
+            const customStyle = this._loadCustomStyleSheet(settings.customStyleSheet);
             const pdfHtml = HtmlBuilder.buildPdfHtml({
                 html: this._lastRenderedHtml,
                 distDir,
                 settings,
+                customStyleSheetCss: customStyle.css,
                 title: this._lastTitle,
             });
 
@@ -417,10 +424,12 @@ export class PreviewPanel {
 
             const distDir = path.join(this._extensionUri.fsPath, 'dist');
             const settings = SettingsManager.read();
+            const customStyle = this._loadCustomStyleSheet(settings.customStyleSheet);
             const exportHtml = HtmlBuilder.buildExportHtml({
                 html: this._lastRenderedHtml,
                 distDir,
                 settings,
+                customStyleSheetCss: customStyle.css,
                 title: this._lastTitle,
                 toc: this._lastToc,
             });
@@ -446,10 +455,12 @@ export class PreviewPanel {
             const baseName = path.basename(this._document.fileName, '.md');
             const distDir = path.join(this._extensionUri.fsPath, 'dist');
             const settings = SettingsManager.read();
+            const customStyle = this._loadCustomStyleSheet(settings.customStyleSheet);
             const pngHtml = HtmlBuilder.buildExportHtml({
                 html: this._lastRenderedHtml,
                 distDir,
                 settings,
+                customStyleSheetCss: customStyle.css,
                 title: this._lastTitle,
                 toc: this._lastToc,
             });
@@ -542,6 +553,8 @@ export class PreviewPanel {
 
     private _update() {
         const webview = this._panel.webview;
+        const settings = SettingsManager.read();
+        const darkMode = !['ivory', 'serene', 'github'].includes(settings.theme);
 
         const documentContent = this._document.getText();
         const documentDir = path.dirname(this._document.fileName);
@@ -575,30 +588,14 @@ export class PreviewPanel {
         // TikZ two-phase render (plan §3.1.6):
         // Phase 1 — synchronous: resolve cache hits instantly, send to webview immediately.
         // Phase 2 — async: resolve cache misses in the background, re-send when done.
-        TikzRenderer.isAvailable().then(available => {
-            if (gen !== this._renderGeneration) { return; } // stale — document changed
+        const phase1Html = TikzRenderer.resolveCacheHits(rawHtml, darkMode);
+        this._lastRenderedHtml = phase1Html;
+        this._sendRender(phase1Html, toc, stats, title, author, date);
 
-            let phase1Html: string;
-            if (!available) {
-                phase1Html = TikzRenderer.resolveUnavailable(rawHtml);
-            } else {
-                phase1Html = TikzRenderer.resolveCacheHits(rawHtml);
-            }
-
-            this._lastRenderedHtml = phase1Html;
-            this._sendRender(phase1Html, toc, stats, title, author, date);
-
-            // Fire async resolution only if there are still unresolved placeholders.
-            if (available && phase1Html.includes('tikz-loading')) {
-                this._resolveTikzAsync(rawHtml, gen, toc, stats, title, author, date);
-            }
-        }).catch(() => {
-            // isAvailable() failed unexpectedly — treat as unavailable.
-            if (gen !== this._renderGeneration) { return; }
-            const fallback = TikzRenderer.resolveUnavailable(rawHtml);
-            this._lastRenderedHtml = fallback;
-            this._sendRender(fallback, toc, stats, title, author, date);
-        });
+        // Fire async resolution only if there are still unresolved placeholders.
+        if (phase1Html.includes('tikz-loading')) {
+            this._resolveTikzAsync(rawHtml, gen, toc, stats, title, author, date, darkMode);
+        }
     }
 
     private async _resolveTikzAsync(
@@ -608,10 +605,11 @@ export class PreviewPanel {
         stats: DocumentStatsType,
         title: string | undefined,
         author: string | undefined,
-        date: string | undefined
+        date: string | undefined,
+        darkMode: boolean
     ): Promise<void> {
         try {
-            const resolvedHtml = await TikzRenderer.resolveAll(rawHtml);
+            const resolvedHtml = await TikzRenderer.resolveAll(rawHtml, darkMode);
             if (this._renderGeneration !== gen) { return; } // document changed while rendering
             this._lastRenderedHtml = resolvedHtml;
             this._sendRender(resolvedHtml, toc, stats, title, author, date);
@@ -632,6 +630,7 @@ export class PreviewPanel {
     ): void {
         if (this._panel.visible && this._webviewReady) {
             const settings = SettingsManager.read();
+            const customStyle = this._loadCustomStyleSheet(settings.customStyleSheet);
             this._panel.webview.postMessage({
                 type: 'render',
                 payload: {
@@ -641,6 +640,7 @@ export class PreviewPanel {
                     metadata: { title, author, date },
                     config: {
                         ...settings,
+                        customStyleSheetCss: customStyle.css,
                         toolbarCollapsed: this._toolbarCollapsed
                     }
                 }
@@ -676,6 +676,7 @@ export class PreviewPanel {
     private _getHtmlForWebview(webview: vscode.Webview): string {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.js'));
         const katexCssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'katex.css'));
+        const tikzJaxFontsCssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'vendor', 'node-tikzjax', 'css', 'fonts.css'));
         const nonce = getNonce();
 
         return `<!DOCTYPE html>
@@ -688,6 +689,7 @@ export class PreviewPanel {
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto:wght@400;500;700&display=swap">
                 <link rel="stylesheet" href="${katexCssUri}">
+                <link rel="stylesheet" href="${tikzJaxFontsCssUri}">
                 <title>Markdown Folio Preview</title>
             </head>
             <body>
@@ -852,6 +854,43 @@ export class PreviewPanel {
                 <script nonce="${nonce}" src="${scriptUri}"></script>
             </body>
             </html>`;
+    }
+
+    private _refreshCustomStyleWatcher(settings: import('./SettingsManager').PreviewSettings): void {
+        this._customStyleWatcher?.dispose();
+        this._customStyleWatcher = undefined;
+
+        const result = CustomStyleSheet.load(settings.customStyleSheet);
+        if (!result.resolvedPath) {
+            return;
+        }
+
+        const pattern = new vscode.RelativePattern(path.dirname(result.resolvedPath), path.basename(result.resolvedPath));
+        this._customStyleWatcher = vscode.workspace.createFileSystemWatcher(pattern);
+        const onChange = () => {
+            this._hasPendingRender = true;
+            if (this._panel.visible) {
+                this._update();
+            }
+        };
+        this._customStyleWatcher.onDidChange(onChange, null, this._disposables);
+        this._customStyleWatcher.onDidCreate(onChange, null, this._disposables);
+        this._customStyleWatcher.onDidDelete(onChange, null, this._disposables);
+    }
+
+    private _loadCustomStyleSheet(configPath: string): { css: string } {
+        const result = CustomStyleSheet.load(configPath);
+        if (result.error) {
+            const warningKey = `${result.resolvedPath || configPath}::${result.error}`;
+            if (warningKey !== this._customStyleWarningKey) {
+                this._customStyleWarningKey = warningKey;
+                vscode.window.showWarningMessage(`Markdown Folio: ${result.error}`);
+            }
+            return { css: '' };
+        }
+
+        this._customStyleWarningKey = '';
+        return { css: result.css };
     }
 }
 

@@ -24,9 +24,10 @@ export class HtmlBuilder {
         html: string;
         distDir: string;
         settings?: PdfSettings;
+        customStyleSheetCss?: string;
         title?: string;
     }): string {
-        const { html, distDir, settings, title } = params;
+        const { html, distDir, settings, customStyleSheetCss, title } = params;
 
         // Đọc PDF stylesheet (mirrors preview light-mode visual)
         const pdfCss = HtmlBuilder._readDistOrSourceCss(distDir, 'document.pdf.css');
@@ -36,6 +37,7 @@ export class HtmlBuilder {
         const katexCss = fs.existsSync(katexCssPath)
             ? fs.readFileSync(katexCssPath, 'utf-8')
             : '';
+        const tikzJaxFontsCss = HtmlBuilder._readTikzJaxFontCss(distDir, true);
 
         const themeCss = HtmlBuilder._readDistOrSourceCss(distDir, 'theme.css');
 
@@ -55,10 +57,13 @@ export class HtmlBuilder {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title ? title.replace(/</g, '&lt;') : 'Document'}</title>
     <base href="file:///${baseHref}/">
+    <style>${themeCss}</style>
     <style>${pdfCss}</style>
     ${themeOverrides ? `<style>${themeOverrides}</style>` : ''}
     <style>${katexCss}</style>
+    ${tikzJaxFontsCss ? `<style>${tikzJaxFontsCss}</style>` : ''}
     ${settingsOverrides ? `<style>${settingsOverrides}</style>` : ''}
+    ${customStyleSheetCss ? `<style id="markdown-folio-custom-style">${HtmlBuilder._escapeStyleTagContent(customStyleSheetCss)}</style>` : ''}
 </head>
 <body class="${themeClass}">
     <div id="document-content">${html}</div>
@@ -95,10 +100,11 @@ export class HtmlBuilder {
         html: string;
         distDir: string;
         settings?: PdfSettings;
+        customStyleSheetCss?: string;
         title?: string;
         toc?: TocItem[];
     }): string {
-        const { html, distDir, settings, title, toc = [] } = params;
+        const { html, distDir, settings, customStyleSheetCss, title, toc = [] } = params;
 
         const themeCss = HtmlBuilder._readDistOrSourceCss(distDir, 'theme.css');
         const documentCss = HtmlBuilder._readDistOrSourceCss(distDir, 'document.css');
@@ -108,6 +114,7 @@ export class HtmlBuilder {
         let katexCss = fs.existsSync(path.join(distDir, 'katex.css'))
             ? fs.readFileSync(path.join(distDir, 'katex.css'), 'utf-8') : '';
         katexCss = HtmlBuilder._inlineFontUrls(katexCss, distDir, /url\((fonts\/[^)]+)\)/g);
+        const tikzJaxFontsCss = HtmlBuilder._readTikzJaxFontCss(distDir, true);
 
         const settingsOverrides = HtmlBuilder._buildSettingsOverrides(settings, false);
         const bodyClass = HtmlBuilder._themeClass(settings?.theme);
@@ -127,7 +134,9 @@ export class HtmlBuilder {
     <style>${documentCss}</style>
     <style>${sidebarCss}</style>
     <style>${katexCss}</style>
+    ${tikzJaxFontsCss ? `<style>${tikzJaxFontsCss}</style>` : ''}
     ${settingsOverrides ? `<style>${settingsOverrides}</style>` : ''}
+    ${customStyleSheetCss ? `<style id="markdown-folio-custom-style">${HtmlBuilder._escapeStyleTagContent(customStyleSheetCss)}</style>` : ''}
     <style>
         #document-container { padding-top: 32px; min-height: 100vh; }
         #sidebar-toc a { color: inherit; text-decoration: none; display: block; }
@@ -284,6 +293,37 @@ body.${themeName}-mode hr {
             const b64 = fs.readFileSync(fontPath).toString('base64');
             return `url('data:${mime};base64,${b64}')`;
         });
+    }
+
+    private static _readTikzJaxFontCss(distDir: string, inlineFonts: boolean): string {
+        const cssPath = path.join(distDir, 'vendor', 'node-tikzjax', 'css', 'fonts.css');
+        if (!fs.existsSync(cssPath)) {
+            return '';
+        }
+
+        let css = fs.readFileSync(cssPath, 'utf-8');
+        if (!inlineFonts) {
+            return css;
+        }
+
+        const cssDir = path.dirname(cssPath);
+        return HtmlBuilder._inlineFontUrlsFrom(css, cssDir, /url\((['"]?)(bakoma\/ttf\/[^'")]+)\1\)/g);
+    }
+
+    private static _inlineFontUrlsFrom(css: string, baseDir: string, pattern: RegExp): string {
+        const mimeMap: Record<string, string> = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf' };
+        return css.replace(pattern, (_match, _quote, relativePath) => {
+            const fontPath = path.join(baseDir, relativePath);
+            if (!fs.existsSync(fontPath)) { return _match; }
+            const ext = path.extname(fontPath).slice(1).toLowerCase();
+            const mime = mimeMap[ext] || 'font/ttf';
+            const b64 = fs.readFileSync(fontPath).toString('base64');
+            return `url('data:${mime};base64,${b64}')`;
+        });
+    }
+
+    private static _escapeStyleTagContent(css: string): string {
+        return css.replace(/<\/style/gi, '<\\/style');
     }
 
     private static _buildSettingsOverrides(settings?: PdfSettings, usePt = true): string {

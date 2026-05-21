@@ -60,4 +60,18 @@ fs.copyFileSync(sourceDocumentCss, path.join(distDir, 'document.css'));
 fs.copyFileSync(sourceToolbarCss, path.join(distDir, 'toolbar.css'));
 fs.copyFileSync(sourceSidebarCss, path.join(distDir, 'sidebar.css'));
 
-console.log('Copied KaTeX assets, mermaid.min.js, DM fonts, Merriweather, document.pdf.css, and webview CSS to dist/');
+// Copy node-tikzjax runtime assets for shaded TikZ rendering
+const tikzJaxRoot = path.join(root, 'node_modules', 'node-tikzjax');
+const tikzJaxDist = path.join(tikzJaxRoot, 'dist');
+const tikzJaxTex = path.join(tikzJaxRoot, 'tex');
+const tikzJaxCss = path.join(tikzJaxRoot, 'css');
+const tikzJaxTargetRoot = path.join(distDir, 'vendor', 'node-tikzjax');
+if (fs.existsSync(tikzJaxRoot)) {
+    fs.rmSync(tikzJaxTargetRoot, { recursive: true, force: true });
+    fs.mkdirSync(tikzJaxTargetRoot, { recursive: true });
+    fs.cpSync(tikzJaxDist, path.join(tikzJaxTargetRoot, 'dist'), { recursive: true, force: true });
+    fs.cpSync(tikzJaxTex, path.join(tikzJaxTargetRoot, 'tex'), { recursive: true, force: true });
+    fs.cpSync(tikzJaxCss, path.join(tikzJaxTargetRoot, 'css'), { recursive: true, force: true });
+}
+
+console.log('Copied KaTeX assets, mermaid.min.js, DM fonts, Merriweather, node-tikzjax runtime assets, document.pdf.css, and webview CSS to dist/');

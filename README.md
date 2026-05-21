@@ -23,6 +23,9 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 **Dracula Theme**
 ![Dracula](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/dracula.png)
 
+**GitHub Alerts + TikZ**
+![GitHub Alerts and TikZ](https://raw.githubusercontent.com/BiViPi/markdown-folio/main/images/github-alerts-tikz.png)
+
 ---
 
 ## Features
@@ -33,11 +36,13 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 ### 🔢 Rendering
 - **Math Formulas** — Full KaTeX support for inline `$...$` and display `$$...$$` equations, rendered natively in Word
 - **Mermaid Diagrams** — Flowchart, sequence, Gantt, mindmap, gitGraph, and more
-- **TikZ Diagrams** — Geometry and technical diagrams rendered through a local LaTeX toolchain, with export support for HTML, PDF, PNG, and DOCX image fallback
+- **TikZ Diagrams** — Geometry and technical diagrams rendered through a local LaTeX toolchain, with hybrid shaded-diagram support and export coverage for HTML, PDF, PNG, and DOCX image fallback
+- **GitHub Alerts** — Native support for `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION` blockquote alerts with icons and GitHub-like accents
 
 ### 🎨 Appearance
 - **6 Professional Themes** — Ivory, Admiral, Serene, Cyberpunk, Dracula, and GitHub
 - **Typography** — Configurable heading/body fonts, font size, heading scale, line spacing, and page width
+- **Custom Stylesheet** — Apply a local CSS file after the built-in styles for preview, HTML export, and PDF export
 - **Table of Contents** — Auto-generated sidebar, click to navigate
 
 ### ⚡ Workflow
@@ -59,6 +64,33 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 
 ---
 
+## Custom Stylesheet
+
+Use `markdownFolio.customStyleSheet` to point Markdown Folio at a local CSS file. The stylesheet is applied after the built-in styles in preview, HTML export, and PDF export.
+
+Notes:
+
+- Relative paths resolve from the first workspace folder.
+- Preview reloads the stylesheet when the file changes on disk.
+- `DOCX` does not guarantee CSS parity.
+
+## GitHub Alerts
+
+Markdown Folio supports GitHub-style alert blockquotes:
+
+```md
+> [!NOTE]
+> Helpful information for the reader.
+```
+
+Supported alert types:
+
+- `NOTE`
+- `TIP`
+- `IMPORTANT`
+- `WARNING`
+- `CAUTION`
+
 ## Settings
 
 | Setting | Default | Description |
@@ -66,6 +98,7 @@ English | [Tiếng Việt](https://github.com/BiViPi/markdown-folio/blob/main/RE
 | `markdownFolio.theme` | `ivory` | Preview theme (ivory, admiral, serene, cyberpunk, dracula, github) |
 | `markdownFolio.headingFont` | Merriweather | Font family for headings |
 | `markdownFolio.bodyFont` | DM Sans | Font family for body text |
+| `markdownFolio.customStyleSheet` | `""` | Path to a custom CSS file applied after built-in preview, HTML export, and PDF export styles |
 | `markdownFolio.fontSize` | `16` | Font size in pixels |
 | `markdownFolio.headingSize` | `M` | Heading scale: S / M / L |
 | `markdownFolio.lineSpacing` | `normal` | Line spacing: compact / normal / relaxed |

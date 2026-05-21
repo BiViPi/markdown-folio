@@ -140,6 +140,21 @@ interface DocStats {
     readingTimeMin: number;
 }
 
+function syncCustomStyleSheet(cssText?: string): void {
+    const existing = document.getElementById('markdown-folio-custom-style');
+    if (!cssText) {
+        existing?.remove();
+        return;
+    }
+
+    const style = existing ?? document.createElement('style');
+    style.id = 'markdown-folio-custom-style';
+    style.textContent = cssText;
+    if (!existing) {
+        document.head.appendChild(style);
+    }
+}
+
 function updateDocStats(stats: DocStats): void {
     let el = document.getElementById('doc-stats');
     if (!el) {
@@ -166,6 +181,7 @@ window.addEventListener('resize', () => {
 function applySettings(settings: {
     headingFont?: string;
     bodyFont?: string;
+    customStyleSheetCss?: string;
     fontSize?: number;
     headingSize?: 'S' | 'M' | 'L';
     lineSpacing?: string;
@@ -178,6 +194,7 @@ function applySettings(settings: {
     scrollSync?: boolean;
 }) {
     const root = document.documentElement;
+    syncCustomStyleSheet(settings.customStyleSheetCss);
     if (settings.headingFont) { root.style.setProperty('--font-heading', settings.headingFont); }
     if (settings.bodyFont) { root.style.setProperty('--font-body', settings.bodyFont); }
     if (settings.fontSize) { root.style.setProperty('--font-size-body', `${settings.fontSize}px`); }
