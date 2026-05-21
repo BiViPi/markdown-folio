@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.2] - 2026-05-21
+
+### Fixed
+- Restored the full packaged `node-tikzjax` runtime dependency tree so shaded TikZ diagrams render correctly from the installed VSIX, including the visible spectrum/gradient case.
+
 ## [1.5.1] - 2026-05-21
 
 ### Fixed
