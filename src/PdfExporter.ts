@@ -86,6 +86,7 @@ export class PdfExporter {
                 '!document.querySelector(".mermaid") || window._mermaidDone === true',
                 { timeout: 15000 }
             );
+            await PdfExporter._waitForFonts(page);
 
             const paperSizeMap: Record<string, { width: string; height: string; widthMm: number; heightMm: number }> = {
                 'A4': { width: '210mm', height: '297mm', widthMm: 210, heightMm: 297 },
@@ -260,5 +261,31 @@ export class PdfExporter {
         catalog.set(PDFName.of('PageMode'), PDFName.of('UseOutlines'));
 
         return pdfDoc.save();
+    }
+
+    private static async _waitForFonts(page: puppeteer.Page): Promise<void> {
+        await page.evaluate(async () => {
+            const fontSet = (document as Document & {
+                fonts?: {
+                    ready?: Promise<unknown>;
+                    status?: string;
+                };
+            }).fonts;
+
+            if (fontSet?.ready) {
+                try {
+                    await fontSet.ready;
+                } catch {
+                    // Ignore font loading failures here and let Chromium fall back normally.
+                }
+            } else if (fontSet?.status === 'loading') {
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+
+            // Allow layout to settle after late font swaps before collecting heading
+            // positions and printing the PDF.
+            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        });
     }
 }
