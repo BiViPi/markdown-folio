@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.3] - 2026-05-25
+
+### Fixed
+- PDF export now waits for custom fonts to finish loading before printing, so heading fonts from `markdownFolio.customStyleSheet` apply reliably in the exported PDF.
+
 ## [1.5.2] - 2026-05-21
 
 ### Fixed
