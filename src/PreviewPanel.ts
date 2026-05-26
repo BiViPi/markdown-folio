@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { MarkdownEngine } from './engine/MarkdownEngine';
-import { PathResolver } from './utils/pathResolver';
+import { sanitizeRenderedHtml } from './engine/sanitizer';
+import { PathResolver, type BlockedImage } from './utils/pathResolver';
+import { getOutputChannel } from './utils/outputChannel';
 import { FrontmatterParser } from './engine/FrontmatterParser';
 import { TocGenerator } from './engine/TocGenerator';
 import { debounce } from './utils/debounce';
@@ -39,6 +42,9 @@ export class PreviewPanel {
     private _tikzReadyWaiters: Array<() => void> = [];
     private _customStyleWatcher: vscode.FileSystemWatcher | undefined;
     private _customStyleWarningKey = '';
+    // Dedupe key for PathResolver diagnostics warnings (02-security-hardening §4.4).
+    // Identical blocked-image sets across renders should warn at most once.
+    private _lastBlockedImagesKey = '';
     // Generation counter for TikZ async render guard (D6).
     // Incremented every _update() call; async results are discarded if stale.
     private _renderGeneration = 0;
@@ -560,11 +566,12 @@ export class PreviewPanel {
         const documentDir = path.dirname(this._document.fileName);
 
         const { title, author, date, content, lineOffset } = FrontmatterParser.extract(documentContent);
-        const base64MappedContent = PathResolver.resolveImages(content, documentDir);
+        const resolvedImages = PathResolver.resolveImagesWithDiagnostics(content, documentDir);
+        this._reportBlockedImages(resolvedImages.diagnostics);
         const toc = TocGenerator.extract(content);
         const stats = DocumentStats.compute(content);
 
-        const rawHtml = PreviewPanel._markdownEngine.render(base64MappedContent, lineOffset);
+        const rawHtml = PreviewPanel._markdownEngine.render(resolvedImages.markdown, lineOffset);
         const gen = ++this._renderGeneration;
 
         this._lastToc = toc;
@@ -580,15 +587,19 @@ export class PreviewPanel {
 
         // Keep non-TikZ documents on the synchronous preview path.
         if (!rawHtml.includes('tikz-pending')) {
-            this._lastRenderedHtml = rawHtml;
-            this._sendRender(rawHtml, toc, stats, title, author, date);
+            const sanitized = sanitizeRenderedHtml(rawHtml);
+            this._lastRenderedHtml = sanitized;
+            this._sendRender(sanitized, toc, stats, title, author, date);
             return;
         }
 
         // TikZ two-phase render (plan §3.1.6):
         // Phase 1 — synchronous: resolve cache hits instantly, send to webview immediately.
         // Phase 2 — async: resolve cache misses in the background, re-send when done.
-        const phase1Html = TikzRenderer.resolveCacheHits(rawHtml, darkMode);
+        // Sanitize the resolved HTML (after TikZ placeholder substitution) per
+        // 02-security-hardening §3.2.3 — sanitizer runs on the resolved tree so
+        // it can see the inline SVG markup and apply the same allowlist.
+        const phase1Html = sanitizeRenderedHtml(TikzRenderer.resolveCacheHits(rawHtml, darkMode));
         this._lastRenderedHtml = phase1Html;
         this._sendRender(phase1Html, toc, stats, title, author, date);
 
@@ -611,8 +622,9 @@ export class PreviewPanel {
         try {
             const resolvedHtml = await TikzRenderer.resolveAll(rawHtml, darkMode);
             if (this._renderGeneration !== gen) { return; } // document changed while rendering
-            this._lastRenderedHtml = resolvedHtml;
-            this._sendRender(resolvedHtml, toc, stats, title, author, date);
+            const sanitized = sanitizeRenderedHtml(resolvedHtml);
+            this._lastRenderedHtml = sanitized;
+            this._sendRender(sanitized, toc, stats, title, author, date);
         } catch {
             // Individual block errors are already encoded inside resolveAll().
             // Nothing to propagate here.
@@ -892,13 +904,43 @@ export class PreviewPanel {
         this._customStyleWarningKey = '';
         return { css: result.css };
     }
+
+    /**
+     * Surfaces PathResolver-blocked image paths (02-security-hardening §4.4):
+     *   - One toast warning per render pass when the blocked set changes.
+     *   - Always log each blocked source to the output channel so the user can
+     *     see the exact paths after dismissing the toast.
+     */
+    private _reportBlockedImages(blocked: BlockedImage[]): void {
+        if (blocked.length === 0) {
+            this._lastBlockedImagesKey = '';
+            return;
+        }
+
+        const key = blocked
+            .map(b => `${b.reason}:${b.source}`)
+            .sort()
+            .join('|');
+        if (key === this._lastBlockedImagesKey) {
+            return;
+        }
+        this._lastBlockedImagesKey = key;
+
+        const channel = getOutputChannel();
+        for (const b of blocked) {
+            channel.appendLine(`PathResolver blocked: [${b.reason}] ${b.source}`);
+        }
+
+        vscode.window.showWarningMessage(
+            `Markdown Folio: ${blocked.length} image(s) skipped (absolute paths or unsupported extensions). See output channel for details.`
+        );
+    }
 }
 
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+function getNonce(): string {
+    // 24 bytes → 32 base64 characters. Cryptographically random per
+    // 02-security-hardening §6 item 9. Math.random is unacceptable for any
+    // value that gates script execution, even when the immediate exploit path
+    // is unclear.
+    return crypto.randomBytes(24).toString('base64');
 }

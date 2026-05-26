@@ -14,6 +14,33 @@ export interface PdfSettings {
     theme?: 'admiral' | 'ivory' | 'serene' | 'cyberpunk' | 'dracula' | 'github';
 }
 
+/**
+ * Content Security Policy for the PDF-render HTML (file:// origin, local-only).
+ * 'unsafe-inline' is required for the embedded Mermaid initializer; removing it
+ * means moving the init script to a sibling file. Deferred to 1.6.0 (master plan §8).
+ * This CSP is additive defense — the primary defense against raw script in the
+ * markdown source is the sanitizer pass in src/engine/sanitizer.ts.
+ */
+const PDF_CSP =
+    "default-src 'none'; " +
+    "img-src data: file:; " +
+    "style-src 'unsafe-inline'; " +
+    "script-src file: 'unsafe-inline'; " +
+    "font-src file: data:";
+
+/**
+ * Content Security Policy for the shareable HTML export. Permits the Google
+ * Fonts + Mermaid CDN dependencies the export still has (Codex #7, deferred).
+ * Blocks arbitrary external script sources and all connect-src exfiltration.
+ */
+const EXPORT_CSP =
+    "default-src 'none'; " +
+    "img-src data: https:; " +
+    "style-src 'unsafe-inline' https://fonts.googleapis.com; " +
+    "script-src https://cdn.jsdelivr.net 'unsafe-inline'; " +
+    "font-src https://fonts.gstatic.com data:; " +
+    "connect-src 'none'";
+
 export class HtmlBuilder {
     /**
      * Tạo HTML self-contained cho PDF.
@@ -54,8 +81,9 @@ export class HtmlBuilder {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="${PDF_CSP}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title ? title.replace(/</g, '&lt;') : 'Document'}</title>
+    <title>${title ? HtmlBuilder._escapeHtmlText(title) : 'Document'}</title>
     <base href="file:///${baseHref}/">
     <style>${themeCss}</style>
     <style>${pdfCss}</style>
@@ -125,8 +153,9 @@ export class HtmlBuilder {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="${EXPORT_CSP}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title ? title.replace(/</g, '&lt;') : 'Document'}</title>
+    <title>${title ? HtmlBuilder._escapeHtmlText(title) : 'Document'}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Merriweather:wght@400;700&display=swap">
@@ -324,6 +353,21 @@ body.${themeName}-mode hr {
 
     private static _escapeStyleTagContent(css: string): string {
         return css.replace(/<\/style/gi, '<\\/style');
+    }
+
+    /**
+     * Escape user-controlled text for safe inclusion in HTML element bodies and
+     * (when single/double quotes are escaped) attribute values. Five characters:
+     * `& < > " '`. Order matters: `&` first so the escape sequences themselves
+     * are not double-escaped on a second pass.
+     */
+    private static _escapeHtmlText(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     private static _buildSettingsOverrides(settings?: PdfSettings, usePt = true): string {

@@ -48,7 +48,6 @@ export class BrowserRasterizer {
         const browser = await puppeteer.launch({
             executablePath: chromePath,
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
 
         const results: Array<string | null> = [];

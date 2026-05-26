@@ -2,9 +2,10 @@ import * as vscode from 'vscode';
 import { PreviewPanel } from './PreviewPanel';
 import { PasteImageHandler } from './PasteImageHandler';
 import { MarkdownFolioEditorProvider } from './MarkdownFolioEditorProvider';
+import { getOutputChannel } from './utils/outputChannel';
 
 export function activate(context: vscode.ExtensionContext) {
-    const channel = vscode.window.createOutputChannel('Markdown Folio');
+    const channel = getOutputChannel();
     channel.appendLine('Markdown Folio activating...');
 
     // Register as a custom editor — appears in "Select editor for *.md" dropdown

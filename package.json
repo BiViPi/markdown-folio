@@ -267,6 +267,7 @@
     "@vscode/markdown-it-katex": "^1.0.1",
     "highlight.js": "^11.11.1",
     "html-to-docx": "^1.8.0",
+    "isomorphic-dompurify": "2.16.0",
     "katex": "^0.16.38",
     "markdown-it": "^14.0.0",
     "markdown-it-anchor": "^8.6.7",
