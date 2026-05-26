@@ -332,7 +332,7 @@ body.${themeName}-mode hr {
         const lines: string[] = [];
 
         if (settings.headingFont) {
-            lines.push(`h1, h3, h4, h5, h6 { font-family: ${settings.headingFont}, Georgia, serif; }`);
+            lines.push(`h1, h2, h3, h4, h5, h6 { font-family: ${settings.headingFont}, Georgia, serif; }`);
         }
         if (settings.headingSize) {
             const hMap: Record<string, [string, string, string]> = usePt

@@ -5,15 +5,15 @@ import * as path from 'path';
 import { HtmlBuilder } from '../src/HtmlBuilder';
 
 /**
- * Phase 1 smoke tests for HtmlBuilder.buildExportHtml / buildPdfHtml.
+ * Smoke tests for HtmlBuilder.buildExportHtml / buildPdfHtml.
  *
- * Phase 1 asserts only the **current** output shape. Specifically:
- *   - CSP meta tag is NOT yet asserted (added in Phase 3 / security workstream).
- *   - h2 selector inclusion is NOT yet asserted (Phase 2 behavior fix).
- *   - Title escape for `& > " '` is NOT yet asserted (Phase 3 cleanup).
+ * Current coverage after Phase 2:
+ *   - document-shape assertions for export and PDF templates
+ *   - heading-font selector includes h2 (Phase 2 behavior fix)
  *
- * When Phase 2/3 land, those assertions move into this file and the affected
- * "current behavior" cases below are updated in the same commit.
+ * Still deferred to Phase 3:
+ *   - CSP meta assertions
+ *   - tightened title escaping for `& > " '`
  */
 describe('HtmlBuilder', () => {
     // Use a fresh empty temp dir so neither dist/ nor webview/styles fallback
@@ -94,15 +94,15 @@ describe('HtmlBuilder', () => {
             expect(out).toContain('<base href="file:///');
         });
 
-        it('emits a heading-font override that targets h1, h3-h6 (current behavior; h2 added in Phase 2)', () => {
+        it('emits a heading-font override that targets all of h1-h6 (Phase 2 fix; h2 now included)', () => {
             const out = HtmlBuilder.buildPdfHtml({
                 html: '<p>body</p>',
                 distDir: tmpDistDir,
                 settings: { headingFont: "'Georgia', serif" },
             });
-            // Phase 2 will change this selector to include h2. The Phase 2 fix
-            // updates this assertion at the same time.
-            expect(out).toContain('h1, h3, h4, h5, h6 { font-family:');
+            expect(out).toContain('h1, h2, h3, h4, h5, h6 { font-family:');
+            // Guard against the previous-shape selector reappearing in this file.
+            expect(out).not.toContain('h1, h3, h4, h5, h6 { font-family:');
         });
     });
 });

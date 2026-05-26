@@ -2,12 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { isLightTheme, getMermaidTheme, type ClassListLike } from '../webview/themeDetection';
 
 /**
- * Phase 1 smoke tests for the Mermaid theme-detection predicate.
+ * Phase 2 smoke tests for the Mermaid theme-detection predicate.
  *
- * The predicate today is buggy for `serene` and `github` themes (audit
- * 03-audit #5 + review NEW). These tests document the CURRENT behavior so
- * Phase 2 can update the predicate and the assertions together in a single
- * commit. Each Phase-1-asserts-current-bug case is tagged below.
+ * The Phase 2 fix expands the light set to match the CSS themes actually
+ * shipped (`ivory-mode`, `serene-mode`, `github-mode`) and drops the dead
+ * `sepia-mode` check. These assertions now describe the corrected behavior.
  */
 
 function classListOf(...classes: string[]): ClassListLike {
@@ -16,23 +15,17 @@ function classListOf(...classes: string[]): ClassListLike {
     };
 }
 
-describe('isLightTheme (current Phase 1 behavior)', () => {
+describe('isLightTheme', () => {
     it('returns true for ivory-mode', () => {
         expect(isLightTheme(classListOf('ivory-mode'))).toBe(true);
     });
 
-    it('returns true for sepia-mode (legacy class — not in current CSS but kept by predicate)', () => {
-        expect(isLightTheme(classListOf('sepia-mode'))).toBe(true);
+    it('returns true for serene-mode', () => {
+        expect(isLightTheme(classListOf('serene-mode'))).toBe(true);
     });
 
-    // PHASE-2 FIX TARGET: should return true once predicate is corrected.
-    it('returns false for serene-mode (Phase 1: bug preserved; Phase 2 fix flips this)', () => {
-        expect(isLightTheme(classListOf('serene-mode'))).toBe(false);
-    });
-
-    // PHASE-2 FIX TARGET: should return true once predicate is corrected.
-    it('returns false for github-mode (Phase 1: bug preserved; Phase 2 fix flips this)', () => {
-        expect(isLightTheme(classListOf('github-mode'))).toBe(false);
+    it('returns true for github-mode', () => {
+        expect(isLightTheme(classListOf('github-mode'))).toBe(true);
     });
 
     it('returns false for admiral-mode', () => {
@@ -47,17 +40,41 @@ describe('isLightTheme (current Phase 1 behavior)', () => {
         expect(isLightTheme(classListOf('dracula-mode'))).toBe(false);
     });
 
+    it('returns false for the historic sepia-mode class (no longer in the predicate)', () => {
+        expect(isLightTheme(classListOf('sepia-mode'))).toBe(false);
+    });
+
     it('returns false for an empty class list', () => {
         expect(isLightTheme(classListOf())).toBe(false);
+    });
+
+    it('returns true when multiple classes are present and one is a light theme', () => {
+        expect(isLightTheme(classListOf('show-print-margins', 'github-mode'))).toBe(true);
     });
 });
 
 describe('getMermaidTheme', () => {
-    it('returns "default" for a light class list', () => {
+    it('returns "default" for ivory-mode', () => {
         expect(getMermaidTheme(classListOf('ivory-mode'))).toBe('default');
     });
 
-    it('returns "dark" for a dark class list', () => {
+    it('returns "default" for serene-mode', () => {
+        expect(getMermaidTheme(classListOf('serene-mode'))).toBe('default');
+    });
+
+    it('returns "default" for github-mode', () => {
+        expect(getMermaidTheme(classListOf('github-mode'))).toBe('default');
+    });
+
+    it('returns "dark" for admiral-mode', () => {
+        expect(getMermaidTheme(classListOf('admiral-mode'))).toBe('dark');
+    });
+
+    it('returns "dark" for cyberpunk-mode', () => {
+        expect(getMermaidTheme(classListOf('cyberpunk-mode'))).toBe('dark');
+    });
+
+    it('returns "dark" for dracula-mode', () => {
         expect(getMermaidTheme(classListOf('dracula-mode'))).toBe('dark');
     });
 

@@ -186,20 +186,6 @@
           "default": true,
           "description": "Show the Table of Contents sidebar in the preview panel."
         },
-        "markdownFolio.showToc": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show/hide Table of Contents."
-        },
-        "markdownFolio.tocPosition": {
-          "type": "string",
-          "default": "sidebar",
-          "enum": [
-            "sidebar",
-            "inline"
-          ],
-          "description": "Position of the TOC."
-        },
         "markdownFolio.theme": {
           "type": "string",
           "default": "ivory",
