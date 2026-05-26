@@ -3,6 +3,7 @@ import { Toolbar } from './toolbar';
 import { Toc } from './toc';
 import { ScrollSync } from './scrollSync';
 import { Lightbox } from './lightbox';
+import { getMermaidTheme as resolveMermaidTheme } from './themeDetection';
 import mermaid from 'mermaid';
 import './styles/theme.css';
 import './styles/document.css';
@@ -42,8 +43,7 @@ window.addEventListener('resize', syncToolbarPosition);
 syncToolbarPosition();
 
 function getMermaidTheme(): 'dark' | 'default' {
-    const isDarkTheme = !document.body.classList.contains('ivory-mode') && !document.body.classList.contains('sepia-mode');
-    return isDarkTheme ? 'dark' : 'default';
+    return resolveMermaidTheme(document.body.classList);
 }
 
 function prepareMermaidNodes(nodes: HTMLElement[], restoreSource: boolean): void {
