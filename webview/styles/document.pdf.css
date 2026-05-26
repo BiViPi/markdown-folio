@@ -377,9 +377,6 @@ hr {
 .tikz-diagram svg {
     max-width: 100%;
     height: auto;
-}
-
-.tikz-diagram[data-tikz-backend="shaded"] svg {
     color: var(--text-primary);
 }
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.4] - 2026-05-26
+
+### Fixed
+
+- Restored a real regression test gate with focused smoke and regression coverage for Markdown rendering, HTML export, theme detection, PathResolver policy handling, TikZ dark-theme color transforms, and DOCX export.
+- Fixed Mermaid theme detection for `serene` and `github`, and applied heading-font overrides consistently to `h2` across preview and export paths.
+- Hardened preview and export sanitization with CSP meta tags, safer image-path policy enforcement, clearer blocked-image diagnostics, and extension-host-safe DOMPurify packaging.
+- Fixed dark-theme TikZ visibility, full-page PNG export clipping, and Windows build cleanup races while preserving Chromium sandbox-safe export launches.
+- Fixed DOCX export stability and fidelity in Word 365, including SVG/data URI handling, unsupported-image fallbacks, table repair issues, font mapping, and KaTeX raster fallback.
+
 ## [1.5.3] - 2026-05-25
 
 ### Fixed

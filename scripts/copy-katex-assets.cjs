@@ -9,6 +9,22 @@ const distDir = path.join(root, 'dist');
 const targetCss = path.join(distDir, 'katex.css');
 const targetFonts = path.join(distDir, 'fonts');
 
+function removeDirSyncWithRetry(dirPath, attempts = 5) {
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            fs.rmSync(dirPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
+            return;
+        } catch (error) {
+            if (attempt === attempts || error.code !== 'ENOTEMPTY') {
+                throw error;
+            }
+
+            // Windows can briefly keep directory entries alive after recursive copy/build work.
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * attempt);
+        }
+    }
+}
+
 if (!fs.existsSync(distDir)) {
     fs.mkdirSync(distDir, { recursive: true });
 }
@@ -69,7 +85,7 @@ async function bundleTikzJaxRuntime() {
 
     const tikzJaxTargetRoot = path.join(distDir, 'vendor', 'node-tikzjax');
     const tikzJaxTargetDist = path.join(tikzJaxTargetRoot, 'dist');
-    fs.rmSync(tikzJaxTargetRoot, { recursive: true, force: true });
+    removeDirSyncWithRetry(tikzJaxTargetRoot);
     fs.mkdirSync(tikzJaxTargetDist, { recursive: true });
 
     const bundledIndexPath = path.join(tikzJaxTargetDist, 'index.js');

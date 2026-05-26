@@ -45,6 +45,8 @@ export class PngExporter {
                 '!document.querySelector(".mermaid") || window._mermaidDone === true',
                 { timeout: 15000 }
             );
+            await PngExporter._waitForFonts(page);
+            await PngExporter._preparePageForRasterExport(page);
 
             const paperMetrics = await PngExporter._getPaperMetrics(page);
 
@@ -52,6 +54,7 @@ export class PngExporter {
                 const buffer: Buffer = await page.screenshot({
                     type: 'png',
                     clip: paperMetrics.fullClip,
+                    captureBeyondViewport: true,
                 });
                 fs.writeFileSync(options.outputPath, buffer);
             } else {
@@ -75,6 +78,7 @@ export class PngExporter {
                             width: paperMetrics.fullClip.width,
                             height,
                         },
+                        captureBeyondViewport: true,
                     });
                     const fileName = `${baseName}-p${i + 1}.png`;
                     fs.writeFileSync(path.join(options.outputPath, fileName), buffer);
@@ -106,16 +110,72 @@ export class PngExporter {
             const scrollY = window.scrollY || document.documentElement.scrollTop;
             const style = window.getComputedStyle(paper);
             const marginBottom = parseFloat(style.marginBottom) || 0;
+            const fullHeight = Math.max(
+                paper.scrollHeight,
+                paper.clientHeight,
+                paper.getBoundingClientRect().height
+            );
+            const fullWidth = Math.max(
+                paper.scrollWidth,
+                paper.clientWidth,
+                paper.getBoundingClientRect().width
+            );
 
             return {
                 fullClip: {
                     x: Math.max(0, Math.floor(rect.left + scrollX)),
                     y: Math.max(0, Math.floor(rect.top + scrollY)),
-                    width: Math.ceil(rect.width),
-                    height: Math.ceil(rect.height + marginBottom),
+                    width: Math.ceil(fullWidth),
+                    height: Math.ceil(fullHeight + marginBottom),
                 },
                 paperHeight: Math.ceil(rect.width * 297 / 210),
             };
+        });
+    }
+
+    private static async _waitForFonts(page: any): Promise<void> {
+        try {
+            await page.evaluate(async () => {
+                if ('fonts' in document) {
+                    await (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready;
+                }
+            });
+        } catch {
+            // Font readiness is a quality improvement, not a hard requirement.
+        }
+    }
+
+    private static async _preparePageForRasterExport(page: any): Promise<void> {
+        await page.addStyleTag({
+            content: `
+html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+.workspace-shell {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+#document-container {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+#document-paper {
+    transform: none !important;
+    margin-bottom: 0 !important;
+    overflow: visible !important;
+}
+`
+        });
+
+        await page.evaluate(async () => {
+            window.scrollTo(0, 0);
+            await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
         });
     }
 }

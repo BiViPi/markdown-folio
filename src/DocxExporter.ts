@@ -21,13 +21,16 @@ type OmmlMap = Map<number, { omml: string; isDisplay: boolean }>;
 
 export class DocxExporter {
     static async export(html: string, options: DocxOptions): Promise<void> {
-
-        const { processed, ommlMap } = await DocxExporter._preprocess(html, options.distDir, options.chromePath);
+        const { processed, ommlMap } = await DocxExporter._preprocess(html, options.distDir, options.settings, options.chromePath);
+        const docxFont = DocxExporter._primaryFontFamily(options.settings?.bodyFont, 'Calibri');
+        const docxFontSize = options.settings?.fontSize
+            ? Math.round(options.settings.fontSize * 1.5) // 1 px ≈ 0.75 pt, DOCX uses half-points
+            : 22;
 
         const rawBuffer: Buffer = await HTMLtoDOCX(processed, undefined, {
             title: options.title || 'Document',
-            font: 'Calibri',
-            fontSize: 22, // 11pt in half-points (OOXML unit)
+            font: docxFont,
+            fontSize: docxFontSize,
             margins: { top: 1080, bottom: 1080, left: 1134, right: 1134, header: 720, footer: 720, gutter: 0 },
             table: { row: { cantSplit: true } },
         });
@@ -43,7 +46,8 @@ export class DocxExporter {
      * 3. xmlns:ve= (old prefix) instead of xmlns:mc= for MarkupCompatibility
      * 4. Attributes with literal "undefined" value
      * 5. Empty <wp:extent/> and <a:ext/> for embedded PNG images
-     * 6. OMML formula injection (replacing OMML_MARKER_N placeholders)
+     * 6. Duplicate <w:tblGrid> blocks emitted inside a single table
+     * 7. OMML formula injection (replacing OMML_MARKER_N placeholders)
      */
     private static async _fixOoxmlCompat(buffer: Buffer, JSZip: any, ommlMap: OmmlMap): Promise<Buffer> {
         const zip = await JSZip.loadAsync(buffer);
@@ -103,7 +107,19 @@ export class DocxExporter {
                 .replace('<a:ext/>', `<a:ext cx="${cx}" cy="${cy}"/>`);
         });
 
-        // Fix 6: Inject OMML formulas (replace OMML_MARKER_N placeholders)
+        // Fix 6: html-to-docx can duplicate <w:tblGrid> inside later rows.
+        // Word 365 repairs these as "Table Properties" and treats the file as
+        // unreadable. Keep only the first grid per table.
+        fixed = fixed.replace(/<w:tbl>[\s\S]*?<\/w:tbl>/g, (tableXml) => {
+            let seenGrid = false;
+            return tableXml.replace(/<w:tblGrid>[\s\S]*?<\/w:tblGrid>/g, (gridXml) => {
+                if (seenGrid) { return ''; }
+                seenGrid = true;
+                return gridXml;
+            });
+        });
+
+        // Fix 7: Inject OMML formulas (replace OMML_MARKER_N placeholders)
         if (ommlMap.size > 0) {
             // Add math namespace to <w:document> if missing
             if (!fixed.includes('xmlns:m=')) {
@@ -155,17 +171,53 @@ export class DocxExporter {
 
     /**
      * Pre-process HTML:
-     * 1. Mermaid code blocks → PNG images via BrowserRasterizer
-     * 2. TikZ diagram blocks → PNG images via BrowserRasterizer
-     * 3. KaTeX HTML → OMML marker placeholders (synchronous, no Puppeteer)
+     * 1. Remove preview-only chrome (inline TOC, anchor icons)
+     * 2. Mermaid code blocks → PNG images via BrowserRasterizer
+     * 3. TikZ diagram blocks → PNG images via BrowserRasterizer
+     * 4. SVG <img> sources → PNG images via BrowserRasterizer
+     * 5. KaTeX HTML → PNG images via BrowserRasterizer
+     * 6. Remaining KaTeX HTML → OMML marker placeholders (fallback)
      */
-    private static async _preprocess(html: string, distDir: string, chromePath?: string): Promise<{ processed: string; ommlMap: OmmlMap }> {
-        let processed = html;
+    private static async _preprocess(
+        html: string,
+        distDir: string,
+        settings?: PdfSettings,
+        chromePath?: string
+    ): Promise<{ processed: string; ommlMap: OmmlMap }> {
+        let processed = DocxExporter.stripPreviewOnlyMarkup(html);
         processed = await DocxExporter.replaceMermaidWithImages(processed, distDir, chromePath);
         processed = await DocxExporter.replaceTikzWithImages(processed, distDir, chromePath);
         processed = DocxExporter.replaceTikzErrorBlocks(processed);
+        processed = await DocxExporter.replaceSvgImagesWithPng(processed, chromePath);
+        processed = await DocxExporter.replaceKatexWithImages(processed, distDir, chromePath);
+        processed = DocxExporter.replaceUnsupportedImages(processed);
+        processed = DocxExporter.normalizeDocxHtml(processed, settings);
         const { processed: withMarkers, ommlMap } = DocxExporter._replaceKatexWithOmml(processed);
         return { processed: withMarkers, ommlMap };
+    }
+
+    /**
+     * DOCX should follow the main document flow, not preview-only affordances.
+     * Remove inline TOC blocks and header-anchor chrome before handing HTML to
+     * html-to-docx.
+     */
+    static stripPreviewOnlyMarkup(html: string): string {
+        return html
+            .replace(/<nav[^>]*class="[^"]*\bauto-toc\b[^"]*"[^>]*>[\s\S]*?<\/nav>/gi, '')
+            .replace(/<div[^>]*class="[^"]*\bauto-toc\b[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+            .replace(/<a[^>]*class="[^"]*\bheader-anchor\b[^"]*"[^>]*>[\s\S]*?<\/a>/gi, '');
+    }
+
+    static normalizeDocxHtml(html: string, settings?: PdfSettings): string {
+        let normalized = html;
+        normalized = DocxExporter._normalizeDetails(normalized, settings);
+        normalized = DocxExporter._normalizeAlerts(normalized, settings);
+        normalized = DocxExporter._normalizeBlockquotes(normalized, settings);
+        normalized = DocxExporter._normalizeCodeBlocks(normalized);
+        normalized = DocxExporter._normalizeInlineCode(normalized);
+        normalized = DocxExporter._normalizeMark(normalized);
+        normalized = DocxExporter._applyDocxTypography(normalized, settings);
+        return normalized;
     }
 
     /**
@@ -175,63 +227,22 @@ export class DocxExporter {
      */
     private static _replaceKatexWithOmml(html: string): { processed: string; ommlMap: OmmlMap } {
         const ommlMap: OmmlMap = new Map();
-        const entries: { start: number; end: number; id: number; omml: string; isDisplay: boolean }[] = [];
-        let nextId = 0;
-        let i = 0;
-
-        while (i < html.length) {
-            const spanStart = html.indexOf('<span', i);
-            if (spanStart === -1) { break; }
-            const tagEnd = html.indexOf('>', spanStart);
-            if (tagEnd === -1) { break; }
-            const openTag = html.slice(spanStart, tagEnd + 1);
-
-            // Match only outermost <span class="katex"> or <span class="katex-display">
-            // Skip sub-spans like katex-html, katex-mathml
-            if (/class="[^"]*\bkatex\b/.test(openTag) &&
-                !/class="[^"]*katex-html/.test(openTag) &&
-                !/class="[^"]*katex-mathml/.test(openTag)) {
-
-                const isDisplay = /class="[^"]*katex-display/.test(openTag);
-
-                // Find balanced closing </span>
-                let depth = 1, j = tagEnd + 1;
-                while (j < html.length && depth > 0) {
-                    const nextOpen = html.indexOf('<span', j);
-                    const nextClose = html.indexOf('</span>', j);
-                    if (nextClose === -1) { j = html.length; break; }
-                    if (nextOpen !== -1 && nextOpen < nextClose) { depth++; j = nextOpen + 5; }
-                    else { depth--; j = nextClose + 7; }
-                }
-
-                const spanContent = html.slice(spanStart, j);
-                const annoMatch = spanContent.match(/<annotation[^>]*encoding="application\/x-tex"[^>]*>([\s\S]*?)<\/annotation>/);
-
-                if (annoMatch) {
-                    const latex = annoMatch[1].trim();
-                    let omml = '';
-                    try {
-                        const mmlResult = katex.renderToString(latex, { output: 'mathml', throwOnError: false });
-                        omml = MathMlToOmml.convert(mmlResult);
-                    } catch {
-                        // omml stays empty — marker injection will be skipped
-                    }
-                    const id = nextId++;
-                    entries.push({ start: spanStart, end: j, id, omml, isDisplay });
-                    ommlMap.set(id, { omml, isDisplay });
-                }
-                i = j;
-            } else {
-                i = tagEnd + 1;
-            }
-        }
+        const entries = DocxExporter._extractKatexEntries(html).filter(entry => entry.latex);
 
         if (entries.length === 0) { return { processed: html, ommlMap }; }
 
         // Replace from end to preserve string indices
         let processed = html;
         for (let k = entries.length - 1; k >= 0; k--) {
-            const { start, end, id, isDisplay } = entries[k];
+            const { start, end, id, isDisplay, latex } = entries[k];
+            let omml = '';
+            try {
+                const mmlResult = katex.renderToString(latex, { output: 'mathml', throwOnError: false });
+                omml = MathMlToOmml.convert(mmlResult);
+            } catch {
+                // omml stays empty — marker injection will be skipped
+            }
+            ommlMap.set(id, { omml, isDisplay });
             const marker = `OMML_MARKER_${id}`;
             // Display math in own <p> so html-to-docx generates a separate paragraph
             const replacement = isDisplay
@@ -241,6 +252,68 @@ export class DocxExporter {
         }
 
         return { processed, ommlMap };
+    }
+
+    /**
+     * Word 365 renders raster math more reliably than the current OMML path for
+     * complex fixture content. Keep OMML as a fallback only if rasterization is
+     * unavailable for a given equation.
+     */
+    static async replaceKatexWithImages(html: string, distDir: string, chromePathSetting?: string): Promise<string> {
+        const entries = DocxExporter._extractKatexEntries(html);
+        if (entries.length === 0) { return html; }
+
+        let chromePath: string;
+        try {
+            chromePath = PdfExporter.findChromePath(chromePathSetting);
+        } catch {
+            return html;
+        }
+
+        const katexCssUrl = pathToFileURL(path.join(distDir, 'katex.css')).href;
+        const jobs: RasterizeJob[] = entries.map(entry => ({
+            html: `<!DOCTYPE html><html><head>
+                <link rel="stylesheet" href="${katexCssUrl}">
+                <style>
+                    html, body { margin: 0; padding: 0; background: white; display: inline-block; }
+                    .math-inline { display: inline-block; padding: 2px 0; }
+                    .math-display { display: inline-block; padding: 4px 0; }
+                </style>
+            </head><body>
+                <div class="${entry.isDisplay ? 'math-display' : 'math-inline'}">${entry.html}</div>
+                <script>
+                    window._fontsDone = false;
+                    if (document.fonts && document.fonts.ready) {
+                        document.fonts.ready.then(function(){ window._fontsDone = true; }).catch(function(){ window._fontsDone = true; });
+                    } else {
+                        window._fontsDone = true;
+                    }
+                <\/script>
+            </body></html>`,
+            selector: entry.isDisplay ? '.math-display' : '.math-inline',
+            waitCondition: 'window._fontsDone === true',
+            timeout: 15_000,
+        }));
+
+        let images: Array<string | null>;
+        try {
+            images = await BrowserRasterizer.renderAll(chromePath, jobs, { pageWidth: 1200, pageHeight: 600, scaleFactor: 2 });
+        } catch {
+            return html;
+        }
+
+        let resolved = html;
+        for (let i = entries.length - 1; i >= 0; i--) {
+            const imgSrc = images[i];
+            if (!imgSrc) {
+                continue;
+            }
+            const replacement = entries[i].isDisplay
+                ? `<p><img src="${imgSrc}" style="display:block;margin:8px auto;max-width:100%;"></p>`
+                : `<img src="${imgSrc}" style="display:inline-block;vertical-align:middle;max-width:100%;">`;
+            resolved = resolved.slice(0, entries[i].start) + replacement + resolved.slice(entries[i].end);
+        }
+        return resolved;
     }
 
     /**
@@ -346,6 +419,66 @@ export class DocxExporter {
             resolved = resolved.slice(0, blocks[i].start) + replacement + resolved.slice(blocks[i].end);
         }
         return resolved;
+    }
+
+    /**
+     * html-to-docx writes malformed OOXML image parts for SVG <img> sources
+     * (notably ".svg+xml" targets with no matching content type). Convert them
+     * to PNG ahead of DOCX generation so Word 365 can open the package cleanly.
+     */
+    static async replaceSvgImagesWithPng(html: string, chromePathSetting?: string): Promise<string> {
+        const images = DocxExporter._extractSvgImageTags(html);
+        if (images.length === 0) { return html; }
+
+        let chromePath: string;
+        try {
+            chromePath = PdfExporter.findChromePath(chromePathSetting);
+        } catch {
+            return DocxExporter._svgImageFallback(html, images);
+        }
+
+        const jobs: RasterizeJob[] = images.map(image => ({
+            html: `<!DOCTYPE html><html><head><style>
+                html, body { margin: 0; padding: 0; background: white; display: inline-block; }
+                img { display: block; max-width: none; }
+            </style></head><body><img src="${DocxExporter._escapeHtmlAttr(image.src)}"></body></html>`,
+            selector: 'img',
+        }));
+
+        let rasterized: Array<string | null>;
+        try {
+            rasterized = await BrowserRasterizer.renderAll(chromePath, jobs);
+        } catch {
+            return DocxExporter._svgImageFallback(html, images);
+        }
+
+        let resolved = html;
+        for (let i = images.length - 1; i >= 0; i--) {
+            const replacement = rasterized[i]
+                ? DocxExporter._replaceImgSrc(images[i].tag, rasterized[i]!)
+                : DocxExporter._svgImagePlaceholder(images[i].alt);
+            resolved = resolved.slice(0, images[i].start) + replacement + resolved.slice(images[i].end);
+        }
+        return resolved;
+    }
+
+    /**
+     * html-to-docx crashes on unresolved local <img> tags that still point at
+     * non-image files such as `.txt`. Keep safe image sources only.
+     */
+    static replaceUnsupportedImages(html: string): string {
+        return html.replace(/<img\b[^>]*>/gi, (tag) => {
+            const srcMatch = tag.match(/\bsrc=(["'])([^"']+)\1/i);
+            if (!srcMatch) {
+                return tag;
+            }
+            const src = srcMatch[2];
+            if (DocxExporter._isDocxSafeImageSource(src)) {
+                return tag;
+            }
+            const altMatch = tag.match(/\balt=(["'])([\s\S]*?)\1/i);
+            return DocxExporter._svgImagePlaceholder(altMatch?.[2] ?? 'image');
+        });
     }
 
     /**
@@ -470,6 +603,275 @@ export class DocxExporter {
         }
 
         return blocks;
+    }
+
+    private static _extractSvgImageTags(html: string): Array<{ start: number; end: number; tag: string; src: string; alt: string }> {
+        const images: Array<{ start: number; end: number; tag: string; src: string; alt: string }> = [];
+        const imgRe = /<img\b[^>]*\bsrc=(["'])([^"']+)\1[^>]*>/gi;
+        let m: RegExpExecArray | null;
+        while ((m = imgRe.exec(html)) !== null) {
+            const tag = m[0];
+            const src = m[2];
+            if (!DocxExporter._isSvgImageSource(src)) {
+                continue;
+            }
+            const altMatch = tag.match(/\balt=(["'])([\s\S]*?)\1/i);
+            images.push({
+                start: m.index,
+                end: m.index + tag.length,
+                tag,
+                src,
+                alt: altMatch?.[2] ?? 'image',
+            });
+        }
+        return images;
+    }
+
+    private static _extractKatexEntries(html: string): Array<{
+        start: number;
+        end: number;
+        id: number;
+        html: string;
+        latex: string;
+        isDisplay: boolean;
+    }> {
+        const entries: Array<{
+            start: number;
+            end: number;
+            id: number;
+            html: string;
+            latex: string;
+            isDisplay: boolean;
+        }> = [];
+        let nextId = 0;
+        let i = 0;
+
+        while (i < html.length) {
+            const spanStart = html.indexOf('<span', i);
+            if (spanStart === -1) { break; }
+            const tagEnd = html.indexOf('>', spanStart);
+            if (tagEnd === -1) { break; }
+            const openTag = html.slice(spanStart, tagEnd + 1);
+
+            if (/class="[^"]*\bkatex\b/.test(openTag) &&
+                !/class="[^"]*katex-html/.test(openTag) &&
+                !/class="[^"]*katex-mathml/.test(openTag)) {
+
+                const isDisplay = /class="[^"]*katex-display/.test(openTag);
+
+                let depth = 1;
+                let j = tagEnd + 1;
+                while (j < html.length && depth > 0) {
+                    const nextOpen = html.indexOf('<span', j);
+                    const nextClose = html.indexOf('</span>', j);
+                    if (nextClose === -1) { j = html.length; break; }
+                    if (nextOpen !== -1 && nextOpen < nextClose) {
+                        depth++;
+                        j = nextOpen + 5;
+                    } else {
+                        depth--;
+                        j = nextClose + 7;
+                    }
+                }
+
+                const spanContent = html.slice(spanStart, j);
+                const annoMatch = spanContent.match(/<annotation[^>]*encoding="application\/x-tex"[^>]*>([\s\S]*?)<\/annotation>/);
+                entries.push({
+                    start: spanStart,
+                    end: j,
+                    id: nextId++,
+                    html: spanContent,
+                    latex: annoMatch?.[1]?.trim() ?? '',
+                    isDisplay,
+                });
+                i = j;
+            } else {
+                i = tagEnd + 1;
+            }
+        }
+
+        return entries;
+    }
+
+    private static _isSvgImageSource(src: string): boolean {
+        return /^data:image\/svg\+xml(?:;charset=[^;,]+)?(?:;base64)?,/i.test(src)
+            || /\.svg(?:[?#].*)?$/i.test(src)
+            || /\.svg\+xml(?:[?#].*)?$/i.test(src);
+    }
+
+    private static _isDocxSafeImageSource(src: string): boolean {
+        if (/^data:image\//i.test(src)) {
+            return true;
+        }
+        if (/^https?:\/\//i.test(src)) {
+            return true;
+        }
+        if (/^file:\/\//i.test(src)) {
+            return /\.(png|jpe?g|gif|bmp|webp|svg)(?:[?#].*)?$/i.test(src);
+        }
+        return /\.(png|jpe?g|gif|bmp|webp|svg)(?:[?#].*)?$/i.test(src);
+    }
+
+    private static _replaceImgSrc(tag: string, newSrc: string): string {
+        return tag.replace(/\bsrc=(["'])[^"']+\1/i, `src="${newSrc}"`);
+    }
+
+    private static _svgImageFallback(
+        html: string,
+        images: Array<{ start: number; end: number; alt: string }>
+    ): string {
+        let resolved = html;
+        for (let i = images.length - 1; i >= 0; i--) {
+            resolved = resolved.slice(0, images[i].start)
+                + DocxExporter._svgImagePlaceholder(images[i].alt)
+                + resolved.slice(images[i].end);
+        }
+        return resolved;
+    }
+
+    private static _normalizeDetails(html: string, settings?: PdfSettings): string {
+        return html.replace(/<details[^>]*>([\s\S]*?)<\/details>/gi, (_match, inner) => {
+            const summaryMatch = inner.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+            const summaryHtml = summaryMatch?.[1]?.trim() ?? 'Details';
+            const body = summaryMatch ? inner.replace(summaryMatch[0], '') : inner;
+            const font = DocxExporter._escapeHtmlAttr(DocxExporter._primaryFontFamily(settings?.bodyFont, 'Calibri'));
+            return `<p style="font-family:${font};"><strong>${summaryHtml}</strong></p>${body}`;
+        });
+    }
+
+    private static _normalizeAlerts(html: string, settings?: PdfSettings): string {
+        const bodyFont = DocxExporter._escapeHtmlAttr(DocxExporter._primaryFontFamily(settings?.bodyFont, 'Calibri'));
+        return html.replace(/<blockquote[^>]*class="[^"]*\bmarkdown-alert\b[^"]*"[^>]*>([\s\S]*?)<\/blockquote>/gi, (_match, inner) => {
+            const titleMatch = inner.match(/<p[^>]*class="[^"]*\bmarkdown-alert-title\b[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
+            const title = DocxExporter._stripTags(titleMatch?.[1] ?? 'Alert');
+            const body = titleMatch ? inner.replace(titleMatch[0], '').trim() : inner.trim();
+            return [
+                '<table style="border-collapse:collapse;width:100%;margin:12px 0;">',
+                '<tr>',
+                `<td style="border:1px solid #d9dee8;padding:12px;font-family:${bodyFont};">`,
+                `<p style="font-family:${bodyFont};margin:0 0 6px 0;"><strong>${DocxExporter._escapeHtmlText(title)}</strong></p>`,
+                body,
+                '</td>',
+                '</tr>',
+                '</table>',
+            ].join('');
+        });
+    }
+
+    private static _normalizeBlockquotes(html: string, settings?: PdfSettings): string {
+        const bodyFont = DocxExporter._escapeHtmlAttr(DocxExporter._primaryFontFamily(settings?.bodyFont, 'Calibri'));
+        return html.replace(/<blockquote(?![^>]*markdown-alert)([^>]*)>([\s\S]*?)<\/blockquote>/gi, (_match, _attrs, inner) => {
+            return [
+                '<table style="border-collapse:collapse;width:100%;margin:12px 0;">',
+                '<tr>',
+                `<td style="border:1px solid #d9dee8;padding:12px;font-family:${bodyFont};">`,
+                inner.trim(),
+                '</td>',
+                '</tr>',
+                '</table>',
+            ].join('');
+        });
+    }
+
+    private static _normalizeCodeBlocks(html: string): string {
+        return html.replace(/<pre[^>]*>\s*<code[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi, (_match, codeHtml) => {
+            const plain = DocxExporter._decodeHtmlEntities(DocxExporter._stripTags(codeHtml));
+            const lines = plain.split(/\r?\n/);
+            const escapedLines = lines.map(line => DocxExporter._escapeHtmlText(line));
+            const joined = escapedLines.join('<br>');
+            return [
+                '<table style="border-collapse:collapse;width:100%;margin:12px 0;">',
+                '<tr>',
+                '<td style="border:1px solid #d9dee8;padding:12px;font-family:Consolas, monospace;">',
+                joined,
+                '</td>',
+                '</tr>',
+                '</table>',
+            ].join('');
+        });
+    }
+
+    private static _normalizeInlineCode(html: string): string {
+        return html.replace(/<code([^>]*)>([\s\S]*?)<\/code>/gi, (_match, _attrs, content) => {
+            const text = DocxExporter._decodeHtmlEntities(DocxExporter._stripTags(content));
+            return `<span style="font-family:Consolas, monospace;">${DocxExporter._escapeHtmlText(text)}</span>`;
+        });
+    }
+
+    private static _normalizeMark(html: string): string {
+        return html.replace(/<mark[^>]*>([\s\S]*?)<\/mark>/gi, (_match, content) => {
+            return `<span style="background-color:#fff59d;">${content}</span>`;
+        });
+    }
+
+    private static _applyDocxTypography(html: string, settings?: PdfSettings): string {
+        const headingFont = DocxExporter._primaryFontFamily(settings?.headingFont, 'Georgia');
+        const headingSizes = DocxExporter._headingSizeMap(settings?.headingSize);
+        return html.replace(/<(h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi, (_match, tag, attrs, inner) => {
+            const level = Number(tag.slice(1));
+            const fontSize = level === 1
+                ? headingSizes.h1
+                : level === 2
+                    ? headingSizes.h2
+                    : headingSizes.h3;
+            const cleanedAttrs = attrs?.trim() ? ` ${attrs.trim()}` : '';
+            return `<${tag}${cleanedAttrs} style="font-family:${DocxExporter._escapeHtmlAttr(headingFont)};font-size:${fontSize};">${inner}</${tag}>`;
+        });
+    }
+
+    private static _headingSizeMap(scale?: PdfSettings['headingSize']): { h1: string; h2: string; h3: string } {
+        const map: Record<string, { h1: string; h2: string; h3: string }> = {
+            S: { h1: '18pt', h2: '14pt', h3: '11pt' },
+            M: { h1: '22pt', h2: '17pt', h3: '13pt' },
+            L: { h1: '28pt', h2: '21pt', h3: '16pt' },
+        };
+        return map[scale || 'M'] ?? map.M;
+    }
+
+    private static _primaryFontFamily(fontSetting: string | undefined, fallback: string): string {
+        if (!fontSetting) {
+            return fallback;
+        }
+
+        const first = fontSetting.split(',')[0]?.trim();
+        if (!first) {
+            return fallback;
+        }
+
+        return first.replace(/^['"]|['"]$/g, '') || fallback;
+    }
+
+    private static _stripTags(value: string): string {
+        return value.replace(/<[^>]+>/g, '');
+    }
+
+    private static _decodeHtmlEntities(value: string): string {
+        return value
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&amp;/g, '&')
+            .replace(/&nbsp;/g, ' ');
+    }
+
+    private static _svgImagePlaceholder(alt: string): string {
+        return `<p><em>[Image: ${DocxExporter._escapeHtmlText(alt || 'image')}]</em></p>`;
+    }
+
+    private static _escapeHtmlAttr(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    private static _escapeHtmlText(value: string): string {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
     private static _readTikzJaxFontCss(distDir: string): string {

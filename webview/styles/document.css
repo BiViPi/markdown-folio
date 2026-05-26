@@ -64,7 +64,7 @@
 }
 
 #document-content h2 {
-    font-family: 'Merriweather', Georgia, serif;
+    font-family: var(--font-heading);
     font-size: calc(1.46rem * var(--heading-scale));
     color: var(--gold-color);
     margin-top: 1.25em;
@@ -168,9 +168,6 @@
     max-width: 100%;
     height: auto;
     display: block;
-}
-
-.tikz-diagram[data-tikz-backend="shaded"] svg {
     color: var(--text-primary);
 }
 

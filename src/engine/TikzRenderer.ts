@@ -353,9 +353,7 @@ function _sourceLineAttr(line: string): string {
 
 function _resultToHtml(result: TikzRenderResult, sourceLine: string, darkMode: boolean): string {
     if (result.ok) {
-        const svg = result.backend === 'shaded'
-            ? transformTikzSvgColors(result.svg, darkMode)
-            : result.svg;
+        const svg = transformTikzSvgColors(result.svg, darkMode);
         return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}>${svg}</div>`;
     }
     return _errorHtml(result.error, sourceLine);

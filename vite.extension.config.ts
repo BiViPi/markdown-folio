@@ -12,15 +12,23 @@ export default defineConfig({
                 const builtins = ['vscode', 'path', 'fs', 'url', 'buffer', 'stream', 'util', 'os',
                     'child_process', 'constants', 'crypto', 'events', 'net', 'http', 'https',
                     'tls', 'zlib', 'assert', 'dns', 'tty', 'readline', 'worker_threads', 'perf_hooks',
-                    // Added in Phase 3 v1.5.4: jsdom (transitive of isomorphic-dompurify) imports
-                    // these. Without explicit externalization vite treats them as browser modules
-                    // and emits empty stubs — the sanitizer would crash at runtime.
                     'vm', 'module', 'querystring', 'string_decoder', 'timers', 'process'];
+                const runtimeModuleTrees = [
+                    // Phase 3 sanitizer: bundling jsdom into extension.js breaks its relative
+                    // worker/module resolution (`./xhr-sync-worker.js`) during activation.
+                    // Keep this chain in node_modules so the extension host loads the package
+                    // with its original on-disk layout.
+                    'isomorphic-dompurify',
+                    'dompurify',
+                    'jsdom',
+                ];
                 // bufferutil & utf-8-validate are optional native addons for ws (used by puppeteer-core).
                 // They must not be bundled — Electron ABI differs from Node.js ABI and causes
                 // "t.mask is not a function" at runtime. Marking them external lets ws fall back to JS.
                 const nativeOptional = ['bufferutil', 'utf-8-validate'];
-                return nativeOptional.includes(id) || builtins.some(b => id === b || id.startsWith(b + '/') || id.startsWith('node:'));
+                const isBuiltin = builtins.some(b => id === b || id.startsWith(b + '/') || id.startsWith('node:'));
+                const isRuntimeTree = runtimeModuleTrees.some(pkg => id === pkg || id.startsWith(pkg + '/'));
+                return nativeOptional.includes(id) || isBuiltin || isRuntimeTree;
             },
             output: {
                 format: 'cjs',
