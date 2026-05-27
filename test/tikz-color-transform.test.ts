@@ -20,6 +20,13 @@ describe('transformTikzSvgColors', () => {
         expect(out).toContain('<text x="0" y="0" stroke="none" fill="currentColor">');
     });
 
+    it('adds currentColor fill to the root svg for dvisvgm glyph-based text', () => {
+        const input = '<svg version="1.1"><g transform="matrix(1 0 0 1 0 0)"><use xlink:href="#g0-77"/></g></svg>';
+        const out = transformTikzSvgColors(input, true);
+        expect(out).toContain('<svg version="1.1" fill="currentColor">');
+        expect(out).toContain('<use xlink:href="#g0-77"/>');
+    });
+
     it('maps explicit white fills to the page background token in dark mode', () => {
         const input = '<svg><rect fill="#fff" stroke="#000" width="10" height="10"/></svg>';
         const out = transformTikzSvgColors(input, true);

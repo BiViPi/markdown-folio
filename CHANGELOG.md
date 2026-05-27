@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.5] - 2026-05-27
+
+### Fixed
+
+- Fixed installed VSIX activation in IDE (Antigravity, VS Code, etc) by packaging the minimal runtime modules required by `readable-stream` (`string_decoder` and `safe-buffer`).
+- Replaced the heavy extension-host sanitizer runtime with a lighter `sanitize-html` implementation while preserving preview and export hardening.
+- Fixed dark-theme TikZ text color for glyph-based SVG output so labels inherit the active theme color instead of staying black.
+
 ## [1.5.4] - 2026-05-26
 
 ### Fixed

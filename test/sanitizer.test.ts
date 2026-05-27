@@ -7,7 +7,7 @@ import { sanitizeRenderedHtml } from '../src/engine/sanitizer';
  * Three contracts (per 02-security-hardening §3.2.4):
  *   - Strip: script/iframe/object/embed/form, on* attributes, javascript: URIs
  *   - Preserve: KaTeX shape, Mermaid placeholder, TikZ placeholder, header
- *     anchor, data-source-line + project data attributes
+ *     anchor, KaTeX inline styles/aria, data-source-line + project data attributes
  *   - Idempotence: sanitize(sanitize(x)) === sanitize(x)
  */
 
@@ -106,6 +106,14 @@ describe('sanitizeRenderedHtml — preserve', () => {
         expect(out).toContain('class="katex-mathml"');
         expect(out).toContain('<math');
         expect(out).toContain('<mi');
+    });
+
+    it('preserves KaTeX inline style and aria-hidden attributes', () => {
+        const input = '<span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span></span>';
+        const out = sanitizeRenderedHtml(input);
+        expect(out).toContain('class="katex-html"');
+        expect(out).toContain('aria-hidden="true"');
+        expect(out).toContain('style="height:0.8974em;vertical-align:-0.0833em"');
     });
 
     it('preserves data: image URIs on <img> elements', () => {

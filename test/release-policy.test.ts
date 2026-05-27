@@ -58,10 +58,10 @@ describe('release-policy — webview nonce uses cryptographic randomness', () =>
 });
 
 describe('release-policy — sanitizer dependency is pinned exactly', () => {
-    it('package.json does not float isomorphic-dompurify with ^ or ~', () => {
+    it('package.json does not float sanitize-html with ^ or ~', () => {
         const manifest = JSON.parse(readSource('package.json')) as {
             dependencies?: Record<string, string>;
         };
-        expect(manifest.dependencies?.['isomorphic-dompurify']).toBe('2.16.0');
+        expect(manifest.dependencies?.['sanitize-html']).toBe('2.17.4');
     });
 });

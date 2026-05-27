@@ -40,6 +40,25 @@ export function transformTikzSvgColors(svg: string, darkMode: boolean): string {
     transformed = replaceInlineStyleColors(transformed, blackPatterns, 'currentColor');
     transformed = replaceInlineStyleColors(transformed, whitePatterns, bgColor);
 
+    // dvisvgm often turns labels into <use> glyph references under <g> groups
+    // with no explicit fill attribute. In dark themes SVG's default fill stays
+    // black, so force the root SVG to inherit the surrounding text color.
+    transformed = transformed.replace(/<svg\b([^>]*)>/i, (fullTag, attrs) => {
+        if (/\bfill\s*=\s*(['"]).*?\1/i.test(attrs)) {
+            return fullTag;
+        }
+        if (/\bcolor\s*=\s*(['"]).*?\1/i.test(attrs)) {
+            return fullTag;
+        }
+        if (/\bstyle\s*=\s*(['"])[\s\S]*?\bfill\s*:/i.test(attrs)) {
+            return fullTag;
+        }
+        if (/\bstyle\s*=\s*(['"])[\s\S]*?\bcolor\s*:/i.test(attrs)) {
+            return fullTag;
+        }
+        return fullTag.replace(/>$/, ' fill="currentColor">');
+    });
+
     transformed = transformed.replace(/<text\b([^>]*)>/gi, (fullTag, attrs) => {
         if (/\bfill\s*=\s*(['"]).*?\1/i.test(attrs)) {
             return fullTag;
