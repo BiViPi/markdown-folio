@@ -1,0 +1,35 @@
+\begin{tikzpicture}[scale=1.05, transform shape,
+    every node/.style={font=\rmfamily}
+]
+    \draw[->, thick, black] (0, 0) -- (13.5, 0) node[right, font=\bfseries\rmfamily] {$\lambda\ (\mathrm{nm})$};
+
+    % Main spectrum bar with denser stops.
+    \shade[left color=violet!95!black, right color=violet!70!blue] (1.0, 0.30) rectangle (2.0, 1.35);
+    \shade[left color=violet!70!blue, right color=blue!95!black]   (2.0, 0.30) rectangle (3.2, 1.35);
+    \shade[left color=blue!95!black, right color=cyan!75!blue]     (3.2, 0.30) rectangle (4.4, 1.35);
+    \shade[left color=cyan!75!blue, right color=teal!80!green]     (4.4, 0.30) rectangle (5.4, 1.35);
+    \shade[left color=teal!80!green, right color=green!95!black]   (5.4, 0.30) rectangle (6.5, 1.35);
+    \shade[left color=green!95!black, right color=lime!90!green]   (6.5, 0.30) rectangle (7.5, 1.35);
+    \shade[left color=lime!90!green, right color=yellow!95!green]  (7.5, 0.30) rectangle (8.5, 1.35);
+    \shade[left color=yellow!95!green, right color=yellow!95!orange] (8.5, 0.30) rectangle (9.4, 1.35);
+    \shade[left color=yellow!95!orange, right color=orange!90!black] (9.4, 0.30) rectangle (10.5, 1.35);
+    \shade[left color=orange!90!black, right color=red!80!orange]  (10.5, 0.30) rectangle (11.7, 1.35);
+    \shade[left color=red!80!orange, right color=red!95!black]     (11.7, 0.30) rectangle (12.8, 1.35);
+
+    % Soft highlight and darker lower band to make raster issues easier to spot.
+    \shade[top color=white, bottom color=white!0] (1.0, 0.95) rectangle (12.8, 1.35);
+    \shade[top color=black!0, bottom color=black!12] (1.0, 0.30) rectangle (12.8, 0.62);
+
+    \foreach \x/\val in {1.0/400, 2.6/440, 4.9/480, 7.0/520, 9.1/580, 10.9/620, 12.8/700} {
+        \draw[thick, black] (\x, 0) -- (\x, -0.20);
+        \node[below, font=\footnotesize\bfseries\rmfamily] at (\x, -0.20) {$\val\,\mathrm{nm}$};
+    }
+
+    \node[violet!80!black, font=\bfseries\rmfamily] at (1.8, 1.72) {Violet};
+    \node[blue!85!black, font=\bfseries\rmfamily]   at (3.5, 1.72) {Blue};
+    \node[teal!70!black, font=\bfseries\rmfamily]   at (5.0, 1.72) {Cyan};
+    \node[green!55!black, font=\bfseries\rmfamily]  at (6.8, 1.72) {Green};
+    \node[olive!70!black, font=\bfseries\rmfamily]  at (8.2, 1.72) {Lime};
+    \node[orange!90!black, font=\bfseries\rmfamily] at (9.9, 1.72) {Amber};
+    \node[red!80!black, font=\bfseries\rmfamily]    at (11.9, 1.72) {Red};
+\end{tikzpicture}

@@ -171,6 +171,12 @@
     color: var(--text-primary);
 }
 
+.tikz-diagram img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
 .tikz-loading {
     color: var(--text-muted);
     font-style: italic;

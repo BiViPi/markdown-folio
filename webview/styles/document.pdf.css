@@ -380,6 +380,12 @@ hr {
     color: var(--text-primary);
 }
 
+.tikz-diagram img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
 .tikz-error,
 .tikz-unavailable {
     font-size: 9pt;

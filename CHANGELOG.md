@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.6] - 2026-05-28
+
+### Fixed
+
+- Fixed upside-down text when rendering shaded TikZ previews.
+- Improved shaded TikZ preview stability by rendering the shaded backend result as an embedded SVG image instead of relying on inline SVG composition in the preview path.
+- Improved shaded TikZ diagnostics so `node-tikzjax` failures now surface actionable TeX error lines, with a standard-backend diagnostic probe when system LaTeX is available.
+
 ## [1.5.5] - 2026-05-27
 
 ### Fixed

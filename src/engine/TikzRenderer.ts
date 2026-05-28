@@ -11,6 +11,11 @@ export type TikzRenderResult =
     | { ok: false; error: string };
 
 type TikzBackend = 'standard' | 'shaded';
+const SYSTEM_LATEX_INSTALL_HINT = 'System LaTeX not available. Install TeX Live or MiKTeX, then reload the window if you just installed it.';
+
+// Bump when routing policy, output transforms, or bundled runtime versions change in a way
+// that can alter rendered output or error formatting. Do not bump for pure refactors.
+const RENDERER_VERSION = '1.5.6';
 
 // ── Rejected commands (D15 + D14) ─────────────────────────────────────────
 // These must not reach pdflatex. Checked before any subprocess is spawned.
@@ -70,16 +75,28 @@ async function _drain(): Promise<void> {
 // ── Cache ─────────────────────────────────────────────────────────────────
 const _cache = new Map<string, TikzRenderResult>();
 
-function _cacheKey(backend: TikzBackend, source: string): string {
-    return crypto.createHash('sha256').update(`${backend}:${source}`).digest('hex');
+function _cacheKey(source: string): string {
+    return crypto.createHash('sha256').update(`${RENDERER_VERSION}:${source}`).digest('hex');
 }
 
 // ── Availability ──────────────────────────────────────────────────────────
 let _available: boolean | null = null;
+let _availableCheckedAt: number = 0;
+const AVAILABILITY_NEGATIVE_TTL_MS = 5 * 60 * 1000;
 let _tikzJaxImportPromise: Promise<TikzJaxModule> | null = null;
 
 interface TikzJaxModule {
-    tex2svg: (input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string>;
+    tex2svg: (input: string, options?: TikzJaxRenderOptions) => Promise<string>;
+}
+
+interface TikzJaxRenderOptions {
+    showConsole?: boolean;
+    tikzLibraries?: string;
+    texPackages?: Record<string, string>;
+    embedFontCss?: boolean;
+    fontCssUrl?: string;
+    disableOptimize?: boolean;
+    disableSanitize?: boolean;
 }
 
 function _checkBinary(cmd: string): Promise<boolean> {
@@ -92,18 +109,23 @@ function _checkBinary(cmd: string): Promise<boolean> {
 export class TikzRenderer {
     /** Check if pdflatex + dvisvgm are on PATH. Cached after first call. */
     static async isAvailable(): Promise<boolean> {
-        if (_available !== null) { return _available; }
+        if (_available === true) { return true; }
+        if (_available === false && Date.now() - _availableCheckedAt < AVAILABILITY_NEGATIVE_TTL_MS) {
+            return false;
+        }
         const [hasPdflatex, hasDvisvgm] = await Promise.all([
             _checkBinary('pdflatex'),
             _checkBinary('dvisvgm'),
         ]);
         _available = hasPdflatex && hasDvisvgm;
+        _availableCheckedAt = Date.now();
         return _available;
     }
 
     /** Reset availability cache (for testing). */
     static resetAvailabilityCache(): void {
         _available = null;
+        _availableCheckedAt = 0;
     }
 
     /**
@@ -176,7 +198,7 @@ export class TikzRenderer {
     static async render(source: string): Promise<TikzRenderResult> {
         const normalized = source.replace(/\r\n/g, '\n').trimEnd();
         const backend = _selectBackend(normalized);
-        const key = _cacheKey(backend, normalized);
+        const key = _cacheKey(normalized);
 
         const cached = _cache.get(key);
         if (cached) { return cached; }
@@ -201,7 +223,7 @@ export class TikzRenderer {
                 let source: string;
                 try { source = Buffer.from(b64, 'base64url').toString('utf-8'); } catch { return _errorHtml('Failed to decode TikZ source.', sourceLine); }
                 const normalized = source.replace(/\r\n/g, '\n').trimEnd();
-                const key = _cacheKey(_selectBackend(normalized), normalized);
+                const key = _cacheKey(normalized);
                 const cached = _cache.get(key);
                 if (!cached) { return _loadingHtml(sourceLine); }
                 return _resultToHtml(cached, sourceLine, darkMode);
@@ -319,24 +341,39 @@ export class TikzRenderer {
         const parsed = TikzRenderer._parseSource(source);
         if (!parsed.ok) { return parsed; }
 
-        try {
-            const tikzJax = await _loadTikzJaxModule();
-            const svg = await tikzJax.tex2svg(
-                `\\begin{document}\n${parsed.bodyBlock}\n\\end{document}`,
-                {
-                    showConsole: false,
-                    tikzLibraries: _mergeTikzLibraries(parsed.userLibLines)
-                }
-            );
+        const tikzJaxResult = await TikzRenderer._runTikzJaxRender(parsed.bodyBlock, parsed.userLibLines);
+        if (tikzJaxResult.ok) {
             return {
                 ok: true,
-                svg: svg.trim(),
+                svg: tikzJaxResult.svg,
                 backend: 'shaded'
             };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            return { ok: false, error: `node-tikzjax failed: ${message}` };
         }
+
+        const hasSystemLatex = await TikzRenderer.isAvailable();
+        const tikzJaxDiagnostic = TikzRenderer._extractTikzJaxErrorExcerpt(
+            tikzJaxResult.consoleLines,
+            tikzJaxResult.message
+        );
+
+        if (!hasSystemLatex) {
+            return {
+                ok: false,
+                error: _joinDiagnosticSections([
+                    _labeledDiagnosticSection('node-tikzjax diagnostic', tikzJaxDiagnostic),
+                    SYSTEM_LATEX_INSTALL_HINT,
+                ]),
+            };
+        }
+
+        const standardProbe = await TikzRenderer._renderWithLatex(source);
+        return {
+            ok: false,
+            error: _joinDiagnosticSections([
+                _labeledDiagnosticSection('node-tikzjax diagnostic', tikzJaxDiagnostic),
+                !standardProbe.ok ? _labeledDiagnosticSection('System LaTeX diagnostic', standardProbe.error) : '',
+            ]),
+        };
     }
 }
 
@@ -354,9 +391,17 @@ function _sourceLineAttr(line: string): string {
 function _resultToHtml(result: TikzRenderResult, sourceLine: string, darkMode: boolean): string {
     if (result.ok) {
         const svg = transformTikzSvgColors(result.svg, darkMode);
+        if (result.backend === 'shaded') {
+            const dataUri = _svgToDataUri(svg);
+            return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}><img src="${dataUri}" alt="TikZ diagram"></div>`;
+        }
         return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}>${svg}</div>`;
     }
     return _errorHtml(result.error, sourceLine);
+}
+
+function _svgToDataUri(svg: string): string {
+    return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf-8').toString('base64')}`;
 }
 
 function _errorHtml(message: string, sourceLine: string): string {
@@ -372,6 +417,18 @@ function _errorHtml(message: string, sourceLine: string): string {
 
 function _loadingHtml(sourceLine: string): string {
     return `<div class="tikz-loading" ${_sourceLineAttr(sourceLine)}>Rendering TikZ…</div>`;
+}
+
+function _joinDiagnosticSections(sections: Array<string | undefined>): string {
+    return sections
+        .map(section => section?.trim())
+        .filter((section): section is string => Boolean(section))
+        .join('\n\n');
+}
+
+function _labeledDiagnosticSection(label: string, body: string): string {
+    const trimmed = body.trim();
+    return trimmed ? `${label}:\n${trimmed}` : '';
 }
 
 function _stderrExcerpt(stderr: string, stdout: string, errorMessage?: string): string {
@@ -446,8 +503,8 @@ async function _loadTikzJaxModule(): Promise<TikzJaxModule> {
         };
 
         const candidate = imported.default as
-            | ((input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string>)
-            | { default?: (input: string, options?: { showConsole?: boolean; tikzLibraries?: string; texPackages?: Record<string, string> }) => Promise<string> };
+            | ((input: string, options?: TikzJaxRenderOptions) => Promise<string>)
+            | { default?: (input: string, options?: TikzJaxRenderOptions) => Promise<string> };
 
         const tex2svg = typeof candidate === 'function'
             ? candidate
@@ -477,6 +534,56 @@ function _buildParsedSourceResultError(error: string): { ok: false; error: strin
 }
 
 namespace TikzRenderer {
+    export function _buildTikzJaxRenderOptions(userLibLines: string[]): TikzJaxRenderOptions {
+        return {
+            showConsole: true,
+            tikzLibraries: _mergeTikzLibraries(userLibLines),
+        };
+    }
+
+    export async function _runTikzJaxRender(
+        bodyBlock: string,
+        userLibLines: string[]
+    ): Promise<
+        | { ok: true; svg: string }
+        | { ok: false; message: string; consoleLines: string[] }
+    > {
+        const capturedLines: string[] = [];
+        const originalConsoleLog = console.log;
+        console.log = (...args: unknown[]) => {
+            capturedLines.push(args.map(arg => String(arg)).join(' '));
+        };
+
+        try {
+            const tikzJax = await _loadTikzJaxModule();
+            const svg = await tikzJax.tex2svg(
+                `\\begin{document}\n${bodyBlock}\n\\end{document}`,
+                TikzRenderer._buildTikzJaxRenderOptions(userLibLines)
+            );
+            return { ok: true, svg: svg.trim() };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return { ok: false, message, consoleLines: capturedLines };
+        } finally {
+            console.log = originalConsoleLog;
+        }
+    }
+
+    export function _extractTikzJaxErrorExcerpt(consoleLines: string[], fallbackMessage: string): string {
+        const interestingLines = consoleLines
+            .map(line => line.replace(/\r/g, '').trim())
+            .filter(line =>
+                line.startsWith('!') ||
+                line.startsWith('l.') ||
+                line.includes('Emergency stop.') ||
+                line.includes('LaTeX Error:') ||
+                line.includes('Package ')
+            )
+            .slice(0, 12);
+
+        return interestingLines.join('\n') || fallbackMessage;
+    }
+
     export function _parseSource(source: string): ParsedTikzSource | { ok: false; error: string } {
         for (const pattern of REJECTED_COMMANDS) {
             if (pattern.test(source)) {
