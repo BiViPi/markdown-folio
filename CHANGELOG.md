@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.7] - 2026-05-29
+
+### Fixed
+
+- Fixed text spacing and letter clustering issue in TikZ diagrams (specifically when rendering with shaded backend / node-tikzjax) by allowing the `transform` attribute on SVG `<text>` elements in the preview and export sanitization allowlists.
+- Expanded preview sanitizer allowlist to support advanced TikZ SVG attributes and tags, including `linearGradient`, `radialGradient`, `stop` elements, and group/path opacity and styling attributes (`fill-opacity`, `stroke-opacity`, `stroke-miterlimit`, `font-family`, `font-size`).
+
 ## [1.5.6] - 2026-05-28
 
 ### Fixed

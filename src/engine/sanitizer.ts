@@ -77,6 +77,9 @@ const ALLOWED_TAGS = Array.from(new Set([
     'clipPath',
     'symbol',
     'use',
+    'linearGradient',
+    'radialGradient',
+    'stop',
 ]));
 
 const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
@@ -98,21 +101,24 @@ const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
     math: ['xmlns', 'display'],
     annotation: ['encoding'],
     svg: ['xmlns', 'viewBox', 'width', 'height', 'fill', 'stroke', 'stroke-width', 'preserveAspectRatio'],
-    g: ['transform', 'fill', 'stroke', 'stroke-width', 'clip-path'],
-    path: ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'transform'],
+    g: ['transform', 'fill', 'stroke', 'stroke-width', 'clip-path', 'font-family', 'font-size', 'fill-opacity', 'stroke-opacity', 'stroke-miterlimit'],
+    path: ['d', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'transform', 'fill-opacity', 'stroke-opacity'],
     line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width', 'stroke-linecap'],
     polyline: ['points', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin'],
     polygon: ['points', 'fill', 'stroke', 'stroke-width', 'stroke-linejoin'],
     rect: ['x', 'y', 'width', 'height', 'rx', 'ry', 'fill', 'stroke', 'stroke-width'],
     circle: ['cx', 'cy', 'r', 'fill', 'stroke', 'stroke-width'],
     ellipse: ['cx', 'cy', 'rx', 'ry', 'fill', 'stroke', 'stroke-width'],
-    text: ['x', 'y', 'dx', 'dy', 'text-anchor', 'font-size', 'font-family', 'fill', 'stroke'],
+    text: ['x', 'y', 'dx', 'dy', 'text-anchor', 'font-size', 'font-family', 'fill', 'stroke', 'transform'],
     tspan: ['x', 'y', 'dx', 'dy', 'text-anchor'],
     defs: [],
     marker: ['id', 'viewBox', 'refX', 'refY', 'markerWidth', 'markerHeight', 'orient'],
     clipPath: ['id'],
     symbol: ['id', 'viewBox'],
     use: ['href', 'xlink:href', 'x', 'y', 'width', 'height'],
+    linearGradient: ['id', 'x1', 'y1', 'x2', 'y2', 'gradientUnits', 'gradientTransform'],
+    radialGradient: ['id', 'cx', 'cy', 'r', 'fx', 'fy', 'gradientUnits', 'gradientTransform'],
+    stop: ['offset', 'stop-color', 'stop-opacity'],
 };
 
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {

@@ -90,6 +90,28 @@ describe('sanitizeRenderedHtml — preserve', () => {
         expect(out).toContain('data-source-line="7"');
     });
 
+    it('preserves TikZ SVG gradients, transforms, opacity, and font properties', () => {
+        const input = '<div class="tikz-diagram"><svg viewBox="0 0 100 100">' +
+            '<defs>' +
+            '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%" gradientUnits="userSpaceOnUse" gradientTransform="rotate(45)">' +
+            '<stop offset="0%" stop-color="#fff" stop-opacity="1"/>' +
+            '</linearGradient>' +
+            '</defs>' +
+            '<g transform="translate(10,10)" font-family="cmbx10" font-size="10" fill-opacity="0.5" stroke-opacity="0.8" stroke-miterlimit="10">' +
+            '<text x="0" y="0" transform="translate(5,5)">P</text>' +
+            '</g>' +
+            '</svg></div>';
+        const out = sanitizeRenderedHtml(input);
+        expect(out).toContain('linearGradient');
+        expect(out).toContain('stop-opacity="1"');
+        expect(out).toContain('transform="translate(10,10)"');
+        expect(out).toContain('transform="translate(5,5)"');
+        expect(out).toContain('font-family="cmbx10"');
+        expect(out).toContain('fill-opacity="0.5"');
+        expect(out).toContain('stroke-opacity="0.8"');
+        expect(out).toContain('stroke-miterlimit="10"');
+    });
+
     it('preserves the header anchor link with inline SVG', () => {
         const input = '<h1><a href="#slug" class="header-anchor"><svg class="header-anchor-icon" viewBox="0 0 24 24"><path d="M10 13"/></svg></a>Title</h1>';
         const out = sanitizeRenderedHtml(input);

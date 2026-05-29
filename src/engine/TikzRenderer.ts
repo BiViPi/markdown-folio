@@ -15,7 +15,7 @@ const SYSTEM_LATEX_INSTALL_HINT = 'System LaTeX not available. Install TeX Live 
 
 // Bump when routing policy, output transforms, or bundled runtime versions change in a way
 // that can alter rendered output or error formatting. Do not bump for pure refactors.
-const RENDERER_VERSION = '1.5.6';
+const RENDERER_VERSION = '1.5.7';
 
 // ── Rejected commands (D15 + D14) ─────────────────────────────────────────
 // These must not reach pdflatex. Checked before any subprocess is spawned.
@@ -391,17 +391,9 @@ function _sourceLineAttr(line: string): string {
 function _resultToHtml(result: TikzRenderResult, sourceLine: string, darkMode: boolean): string {
     if (result.ok) {
         const svg = transformTikzSvgColors(result.svg, darkMode);
-        if (result.backend === 'shaded') {
-            const dataUri = _svgToDataUri(svg);
-            return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}><img src="${dataUri}" alt="TikZ diagram"></div>`;
-        }
         return `<div class="tikz-diagram" data-tikz-backend="${result.backend}" ${_sourceLineAttr(sourceLine)}>${svg}</div>`;
     }
     return _errorHtml(result.error, sourceLine);
-}
-
-function _svgToDataUri(svg: string): string {
-    return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf-8').toString('base64')}`;
 }
 
 function _errorHtml(message: string, sourceLine: string): string {
