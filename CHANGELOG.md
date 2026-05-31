@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.8] - 2026-05-31
+
+### Fixed
+
+- Fixed scrambled bold/thin font rendering of Latin accented characters (e.g., `ã`, `õ`, `í`) in TikZ diagrams by configuring the standard LaTeX compiler to use the Latin Modern Sans-Serif font (`fontenc` with `T1` option, `lmodern`, and redefining default family to `\sfdefault`).
+- Fixed text spacing distortion and font rendering issues when multiple TikZ diagrams are rendered on the same preview page, by rewriting inline SVG element IDs (`id`, `href`, `url`) using unique suffixes based on diagram hashes to prevent ID collision in the VS Code WebView DOM.
+
 ## [1.5.7] - 2026-05-29
 
 ### Fixed

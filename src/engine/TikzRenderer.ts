@@ -13,9 +13,7 @@ export type TikzRenderResult =
 type TikzBackend = 'standard' | 'shaded';
 const SYSTEM_LATEX_INSTALL_HINT = 'System LaTeX not available. Install TeX Live or MiKTeX, then reload the window if you just installed it.';
 
-// Bump when routing policy, output transforms, or bundled runtime versions change in a way
-// that can alter rendered output or error formatting. Do not bump for pure refactors.
-const RENDERER_VERSION = '1.5.7';
+const RENDERER_VERSION = '1.5.8';
 
 // ── Rejected commands (D15 + D14) ─────────────────────────────────────────
 // These must not reach pdflatex. Checked before any subprocess is spawned.
@@ -181,6 +179,9 @@ export class TikzRenderer {
 
         const tex = [
             `\\documentclass[tikz,border=4pt]{standalone}`,
+            `\\usepackage[T1]{fontenc}`,
+            `\\usepackage{lmodern}`,
+            `\\renewcommand{\\familydefault}{\\sfdefault}`,
             `\\usetikzlibrary{${DEFAULT_LIBRARIES}}`,
             userLibSection.trimEnd(),
             `\\begin{document}`,
@@ -204,8 +205,8 @@ export class TikzRenderer {
         if (cached) { return cached; }
 
         const result = await enqueue(() => backend === 'shaded'
-            ? TikzRenderer._renderWithTikzJax(normalized)
-            : TikzRenderer._renderWithLatex(normalized));
+            ? TikzRenderer._renderWithTikzJax(normalized, key)
+            : TikzRenderer._renderWithLatex(normalized, key));
         _cache.set(key, result);
         return result;
     }
@@ -283,7 +284,7 @@ export class TikzRenderer {
     }
 
     /** Internal: spawn pdflatex + dvisvgm in an isolated temp directory. */
-    private static async _renderWithLatex(source: string): Promise<TikzRenderResult> {
+    private static async _renderWithLatex(source: string, key: string): Promise<TikzRenderResult> {
         const parsed = TikzRenderer._parseSource(source);
         if (!parsed.ok) { return parsed; }
         const tex = TikzRenderer._buildStandardTex(parsed.body, parsed.userLibLines);
@@ -317,6 +318,7 @@ export class TikzRenderer {
                 ['--no-fonts', 'diagram.dvi', '--output=diagram.svg'],
                 { cwd: tmpDir, timeout: 30_000 }
             );
+
             if (!svgResult.ok) {
                 return { ok: false, error: `dvisvgm failed: ${svgResult.stderr.slice(0, 300)}` };
             }
@@ -329,6 +331,9 @@ export class TikzRenderer {
             // Strip XML declaration — makes it safe to inline in HTML.
             svg = svg.replace(/<\?xml[^?]*\?>\s*/i, '').trim();
 
+            // Rewrite SVG IDs using diagram key to prevent WebView ID collision
+            svg = _rewriteSvgIds(svg, key.slice(0, 8));
+
             return { ok: true, svg, backend: 'standard' };
 
         } finally {
@@ -337,15 +342,16 @@ export class TikzRenderer {
         }
     }
 
-    private static async _renderWithTikzJax(source: string): Promise<TikzRenderResult> {
+    private static async _renderWithTikzJax(source: string, key: string): Promise<TikzRenderResult> {
         const parsed = TikzRenderer._parseSource(source);
         if (!parsed.ok) { return parsed; }
 
         const tikzJaxResult = await TikzRenderer._runTikzJaxRender(parsed.bodyBlock, parsed.userLibLines);
         if (tikzJaxResult.ok) {
+            const svg = _rewriteSvgIds(tikzJaxResult.svg, key.slice(0, 8));
             return {
                 ok: true,
-                svg: tikzJaxResult.svg,
+                svg,
                 backend: 'shaded'
             };
         }
@@ -366,7 +372,7 @@ export class TikzRenderer {
             };
         }
 
-        const standardProbe = await TikzRenderer._renderWithLatex(source);
+        const standardProbe = await TikzRenderer._renderWithLatex(source, key);
         return {
             ok: false,
             error: _joinDiagnosticSections([
@@ -623,6 +629,9 @@ namespace TikzRenderer {
 
         return [
             `\\documentclass[tikz,border=4pt]{standalone}`,
+            `\\usepackage[T1]{fontenc}`,
+            `\\usepackage{lmodern}`,
+            `\\renewcommand{\\familydefault}{\\sfdefault}`,
             `\\usetikzlibrary{${DEFAULT_LIBRARIES}}`,
             userLibSection.trimEnd(),
             `\\begin{document}`,
@@ -630,4 +639,17 @@ namespace TikzRenderer {
             `\\end{document}`,
         ].filter(l => l !== '').join('\n') + '\n';
     }
+}
+
+function _rewriteSvgIds(svg: string, suffix: string): string {
+    let result = svg.replace(/\bid=['"]([^'"]+)['"]/g, (match, id) => {
+        return `id="${id}_${suffix}"`;
+    });
+    result = result.replace(/\b(xlink:)?href=['"]#([^'"]+)['"]/g, (match, prefix, id) => {
+        return `${prefix || ''}href="#${id}_${suffix}"`;
+    });
+    result = result.replace(/url\(#([^)]+)\)/g, (match, id) => {
+        return `url(#${id}_${suffix})`;
+    });
+    return result;
 }
